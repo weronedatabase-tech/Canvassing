@@ -6,6 +6,8 @@
     <title>Fundraising Shop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -83,10 +85,25 @@
              <button onclick="router('cart')" class="text-gray-500"><i class="fas fa-arrow-left"></i></button>
              <h2 class="text-xl font-bold">Payment & Submit</h2>
         </div>
-        <div class="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6 text-sm text-yellow-800">
-            <h3 class="font-bold mb-1"><i class="fas fa-info-circle"></i> Instructions</h3>
-            <p id="displayPayment" class="whitespace-pre-wrap">Loading...</p>
+        
+        <!-- PAYNOW QR SECTION -->
+        <div class="bg-white border-2 border-purple-800 p-4 rounded-lg mb-6 shadow-sm text-center">
+            <div class="flex items-center justify-center gap-2 mb-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/24/PayNow_logo.svg" alt="PayNow" class="h-8">
+            </div>
+            
+            <p class="text-sm font-bold text-gray-700">Scan to Pay: <span id="paynowTotalDisplay" class="text-purple-700 text-lg">$0.00</span></p>
+            <p class="text-xs text-gray-500 mb-3">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
+
+            <div class="flex justify-center mb-3">
+                <canvas id="qrCanvas" class="border p-2 rounded"></canvas>
+            </div>
+            
+            <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded text-xs font-bold hover:bg-purple-200">
+                <i class="fas fa-download"></i> Download QR
+            </a>
         </div>
+
         <form id="checkoutForm" onsubmit="handleSubmission(event)" class="space-y-4 bg-white p-5 rounded shadow">
             <div><label class="block text-xs font-bold text-gray-500 uppercase">Full Name</label><input type="text" name="customerName" required class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
             <div class="grid grid-cols-2 gap-4">
@@ -124,7 +141,6 @@
              <p class="text-sm text-gray-500 font-bold uppercase">Order ID</p><p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 mb-2">ORD-XXXX</p>
              <p class="text-sm text-gray-500 font-bold uppercase">Total</p><p id="successTotal" class="text-xl font-bold text-blue-600">$0.00</p>
         </div>
-        <!-- UPDATED BUTTON TEXT -->
         <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3 px-4 text-center text-sm">
             <i class="fab fa-whatsapp text-xl shrink-0"></i> Send yourself the order confirmation via whatsapp
         </button>
@@ -156,7 +172,8 @@
             <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Settings</h3>
             <div class="space-y-3">
                 <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
-                <div><label class="text-xs font-bold text-gray-500">Payment Instructions</label><textarea id="editPayment" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
+                <!-- CHANGED LABEL -->
+                <div><label class="text-xs font-bold text-gray-500">PayNow Number (8 Digits Only)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm" placeholder="e.g. 91234567"></div>
                 <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
                 <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
             </div>
@@ -216,7 +233,8 @@
 
     function updateUI() {
         document.getElementById('displayIntro').innerText = appData.config.intro || '';
-        document.getElementById('displayPayment').innerText = appData.config.paymentInfo || '';
+        // Note: paymentInfo now holds the PayNow number
+        document.getElementById('editPayment').value = appData.config.paymentInfo || '';
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
         renderProducts();
         renderCart();
@@ -292,186 +310,4 @@
         const field = document.getElementById('dynamicField');
         const input = document.getElementById('relatedName');
         const label = document.getElementById('dynamicLabel');
-        if (type === 'Friend/Family') { field.classList.remove('hidden'); label.innerText = "Name of Volunteer"; input.required = true; }
-        else if (type === 'Caregiver') { field.classList.remove('hidden'); label.innerText = "Name of Trainee"; input.required = true; }
-        else { field.classList.add('hidden'); input.required = false; }
-    }
-
-    async function handleSubmission(e) {
-        e.preventDefault();
-        if (cart.length === 0) return alert("Cart empty");
-        if (!confirm("Submit Order?")) return;
-        
-        const form = new FormData(e.target);
-        const file = document.getElementById('paymentProof').files[0];
-        
-        showLoading(true, "Compressing Payment Proof...");
-        let base64 = await compressImage(file, 0.5); 
-
-        showLoading(true, "Submitting Order...");
-        const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-        
-        const payload = {
-            customerName: form.get('customerName'),
-            contact: form.get('contact'),
-            email: form.get('email'),
-            userType: form.get('userType'),
-            relatedName: form.get('relatedName') || 'N/A',
-            cart: cart,
-            totalAmount: totalAmount,
-            paymentProofBase64: base64,
-            mimeType: 'image/jpeg' 
-        };
-
-        try {
-            const res = await apiCall('SUBMIT_ORDER', payload);
-            lastOrderDetails = { id: res.data.orderId, total: totalAmount, customerName: payload.customerName, contact: payload.contact, cart: [...cart] };
-            cart = []; e.target.reset(); refreshAllViews();
-            document.getElementById('successOrderId').innerText = lastOrderDetails.id;
-            document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
-            router('success');
-            // REMOVED: setTimeout(sendWhatsapp, 1000);
-        } catch(err) { console.error(err); }
-    }
-
-    function sendWhatsapp() {
-        if (!lastOrderDetails) return;
-        let num = lastOrderDetails.contact.replace(/\D/g, '');
-        if (num.length === 8) num = '65' + num;
-        const itemsList = lastOrderDetails.cart.map(i => `- ${i.name} (x${i.qty})`).join('\n');
-        const msg = `*Order Confirmation: ${lastOrderDetails.id}*\nName: ${lastOrderDetails.customerName}\nTotal: $${lastOrderDetails.total.toFixed(2)}\n\n*Items:*\n${itemsList}\n\n_Automated copy of your order._`;
-        window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    // --- ADMIN ---
-    async function openAdminAuth() {
-        const pin = prompt("Enter Admin PIN:");
-        if (pin) {
-            try { ADMIN_PIN = pin; await apiCall('VERIFY_ADMIN'); openAdminPanel(); } catch(e) { ADMIN_PIN = null; }
-        }
-    }
-    function openAdminPanel() {
-        router('admin');
-        document.getElementById('adminEventName').innerText = appData.activeEventName;
-        document.getElementById('editIntro').value = appData.config.intro || '';
-        document.getElementById('editPayment').value = appData.config.paymentInfo || '';
-        document.getElementById('editPin').value = appData.config.adminPin || '1234';
-        renderAdminProducts();
-    }
-    
-    // RENDER ADMIN LIST
-    function renderAdminProducts() {
-        const list = document.getElementById('adminProductList');
-        if (appData.products.length === 0) list.innerHTML = "<p class='text-gray-500 text-sm'>No products added.</p>";
-        else list.innerHTML = appData.products.map((p, idx) => `
-            <div class="flex justify-between items-center bg-gray-50 p-2 rounded border text-sm">
-                <div class="flex gap-1 flex-col">
-                     ${idx > 0 ? `<button onclick="moveProduct(${idx}, -1)" class="text-blue-500 hover:text-blue-700 font-bold">▲</button>` : '<span class="h-5"></span>'}
-                     ${idx < appData.products.length - 1 ? `<button onclick="moveProduct(${idx}, 1)" class="text-blue-500 hover:text-blue-700 font-bold">▼</button>` : '<span class="h-5"></span>'}
-                </div>
-                <div class="flex-1 px-3">
-                    <div class="font-bold text-gray-700">${p.name}</div>
-                    <div class="text-xs text-gray-500">$${p.price}</div>
-                </div>
-                <button onclick="deleteProduct('${p.id}')" class="text-red-500 font-bold px-2">X</button>
-            </div>
-        `).join('');
-    }
-
-    function moveProduct(idx, dir) {
-        const temp = appData.products[idx];
-        appData.products[idx] = appData.products[idx + dir];
-        appData.products[idx + dir] = temp;
-        renderAdminProducts();
-    }
-    
-    function openEventSheet() {
-        if (appData.activeSheetId) {
-            window.open(`https://docs.google.com/spreadsheets/d/${appData.activeSheetId}`, '_blank');
-        } else {
-            alert("No active sheet available.");
-        }
-    }
-
-    async function saveOrder() {
-        if (!confirm("Save this display order?")) return;
-        const idList = appData.products.map(p => p.id);
-        await apiCall('SAVE_ORDER', idList);
-        alert("Order Saved!");
-    }
-
-    async function resetOrder() {
-        if (!confirm("Reset to default Alphabetical order?")) return;
-        await apiCall('RESET_ORDER');
-        loadAppData().then(openAdminPanel);
-    }
-
-    async function saveSettings() {
-        await apiCall('UPDATE_CONFIG', { intro: document.getElementById('editIntro').value, paymentInfo: document.getElementById('editPayment').value, adminPin: document.getElementById('editPin').value });
-        alert("Saved!"); loadAppData();
-    }
-    async function addProduct() {
-        const name = document.getElementById('newProdName').value;
-        const price = document.getElementById('newProdPrice').value;
-        const file = document.getElementById('newProdImg').files[0];
-        if (!name || !price || !file) return alert("All fields required");
-        showLoading(true, "Compressing & Uploading...");
-        const base64 = await compressImage(file, 0.5); 
-        await apiCall('ADD_PRODUCT', { name, price, imageBase64: base64, mimeType: 'image/jpeg' });
-        document.getElementById('newProdName').value = '';
-        document.getElementById('newProdPrice').value = '';
-        document.getElementById('newProdImg').value = '';
-        alert("Product Added!");
-        loadAppData().then(openAdminPanel);
-    }
-    async function deleteProduct(id) {
-        if(confirm("Delete product?")) {
-            await apiCall('DELETE_PRODUCT', id);
-            loadAppData().then(openAdminPanel);
-        }
-    }
-    async function createNewEvent() {
-        const name = document.getElementById('newEventName').value;
-        if (name && confirm("Create new event?")) {
-            await apiCall('CREATE_EVENT', name);
-            alert("Event Created!");
-            loadAppData().then(openAdminPanel);
-        }
-    }
-    function adminLogout() { ADMIN_PIN = null; router('home'); }
-
-    // --- UTILS ---
-    function router(view) {
-        document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
-        document.getElementById(`view-${view}`).classList.remove('hidden');
-        window.scrollTo(0,0);
-    }
-    function showLoading(show, text="Processing...") {
-        const el = document.getElementById('loadingOverlay');
-        document.getElementById('loadingText').innerText = text;
-        show ? el.classList.remove('hidden') : el.classList.add('hidden');
-    }
-    function compressImage(file, quality=0.5) {
-        return new Promise((resolve, reject) => {
-            const MAX_WIDTH = 1000;
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', quality)); 
-                };
-            };
-            reader.onerror = reject;
-        });
-    }
-</script>
-</body>
-</html>
+        if (type === 'Fr
