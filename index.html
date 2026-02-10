@@ -16,7 +16,7 @@
 <body class="bg-gray-50 text-gray-800 font-sans pb-20">
 
 <script>
-    // ⚠️ PASTE YOUR WEB APP URL HERE
+    // ⚠️ DEPLOYED WEB APP URL
     const API_URL = "https://script.google.com/macros/s/AKfycbxpgGDFHHhENaWSd50Vm70C5kioPu9nba89QDN4dJ8W-JsHsQfMZNJpIH_YqnlwROmf/exec"; 
 </script>
 
@@ -134,6 +134,27 @@
         </form>
     </section>
 
+    <!-- PAGE: ORDER SUCCESS (NEW) -->
+    <section id="view-success" class="p-6 hidden fade-in flex flex-col items-center justify-center min-h-[60vh]">
+        <div class="bg-green-100 p-4 rounded-full mb-4">
+            <i class="fas fa-check text-4xl text-green-600"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-green-700 mb-2">Order Submitted!</h2>
+        <p class="text-gray-600 text-center mb-6">Thank you for your support. Your order has been recorded.</p>
+        
+        <div class="bg-white p-4 rounded shadow w-full mb-6">
+             <p class="text-sm text-gray-500 font-bold uppercase">Order ID</p>
+             <p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 mb-2">ORD-XXXX</p>
+             <p class="text-sm text-gray-500 font-bold uppercase">Total Amount</p>
+             <p id="successTotal" class="text-xl font-bold text-blue-600">$0.00</p>
+        </div>
+
+        <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3">
+            <i class="fab fa-whatsapp text-xl"></i> Send WhatsApp Summary
+        </button>
+        <button onclick="router('home')" class="text-blue-600 font-bold hover:underline">Back to Home</button>
+    </section>
+
     <!-- PAGE: ADMIN DASHBOARD -->
     <section id="view-admin" class="p-4 hidden fade-in bg-gray-100 min-h-screen">
         <div class="flex justify-between items-center mb-6">
@@ -151,10 +172,11 @@
         </div>
 
         <div class="bg-white p-4 rounded shadow mb-6">
-            <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Text</h3>
+            <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Settings</h3>
             <div class="space-y-3">
                 <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
                 <div><label class="text-xs font-bold text-gray-500">Payment Instructions</label><textarea id="editPayment" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
+                <div><label class="text-xs font-bold text-gray-500">Organizer WhatsApp No. (with Country Code)</label><input type="number" id="editWhatsapp" placeholder="e.g. 6591234567" class="w-full p-2 border rounded text-sm"></div>
                 <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
                 <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
             </div>
@@ -178,7 +200,8 @@
 <script>
     // --- STATE ---
     let appData = { config: {}, products: [], activeEventName: '' };
-    let cart = []; // Array of objects { id, name, price, qty, image }
+    let cart = []; 
+    let lastOrderDetails = null; // Store for success page
     let ADMIN_PIN = null;
 
     window.onload = loadAppData;
@@ -218,14 +241,10 @@
     }
 
     // --- RENDERERS ---
-    
-    // Renders the Shop Page List
     function renderProducts() {
         const list = document.getElementById('productList');
         list.innerHTML = appData.products.map(p => {
-            // Check if item is already in cart to show Quantity Controls
             const inCart = cart.find(c => c.id === p.id);
-            
             return `
             <div class="bg-white rounded-lg shadow flex overflow-hidden border border-gray-100 relative">
                 <div class="w-24 h-full bg-gray-200 shrink-0 absolute left-0 top-0 bottom-0">
@@ -236,21 +255,14 @@
                         <h3 class="font-bold text-gray-800 text-sm">${p.name}</h3>
                         <span class="text-blue-600 font-bold">$${p.price}</span>
                     </div>
-                    
                     <div class="self-end mt-2">
                         ${ inCart 
-                            ? `
-                            <div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
+                            ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100">
                                 <button onclick="updateQty(${p.id}, -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200 transition">-</button>
                                 <span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span>
                                 <button onclick="updateQty(${p.id}, 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200 transition">+</button>
-                            </div>
-                            ` 
-                            : `
-                            <button onclick="addToCart(${p.id})" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition">
-                                Add to Cart
-                            </button>
-                            `
+                            </div>` 
+                            : `<button onclick="addToCart(${p.id})" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm transition">Add to Cart</button>`
                         }
                     </div>
                 </div>
@@ -258,7 +270,6 @@
         `}).join('');
     }
 
-    // Renders the Cart Page List
     function renderCart() {
         const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
         document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
@@ -288,56 +299,37 @@
         }
     }
 
-    // --- CART ACTIONS ---
-
-    // Adds a new item to cart with qty 1
+    // --- ACTIONS ---
     function addToCart(id) {
         const product = appData.products.find(p => p.id === id);
         if (!product) return;
-        
         cart.push({ ...product, qty: 1 });
         refreshAllViews();
     }
 
-    // Updates quantity (Handles removal if qty goes to 0)
     function updateQty(id, change) {
         const index = cart.findIndex(item => item.id === id);
-        if (index === -1) return; // Should not happen
-
+        if (index === -1) return;
         cart[index].qty += change;
-
-        if (cart[index].qty <= 0) {
-            cart.splice(index, 1);
-        }
-        
+        if (cart[index].qty <= 0) cart.splice(index, 1);
         refreshAllViews();
     }
 
-    // Helper to update both Shop and Cart views simultaneously
     function refreshAllViews() {
-        renderProducts(); // Updates the buttons in the Shop view
-        renderCart();     // Updates the list in the Cart view
+        renderProducts();
+        renderCart();
     }
 
-    // --- CHECKOUT & ADMIN (Existing Logic) ---
+    // --- CHECKOUT & WHATSAPP ---
     function handleUserTypeChange() {
         const type = document.getElementById('userType').value;
         const field = document.getElementById('dynamicField');
-        const label = document.getElementById('dynamicLabel');
         const input = document.getElementById('relatedName');
+        const label = document.getElementById('dynamicLabel');
 
-        if (type === 'Friend/Family') {
-            field.classList.remove('hidden');
-            label.innerText = "Name of Volunteer";
-            input.required = true;
-        } else if (type === 'Caregiver') {
-            field.classList.remove('hidden');
-            label.innerText = "Name of Trainee";
-            input.required = true;
-        } else {
-            field.classList.add('hidden');
-            input.required = false;
-        }
+        if (type === 'Friend/Family') { field.classList.remove('hidden'); label.innerText = "Name of Volunteer"; input.required = true; }
+        else if (type === 'Caregiver') { field.classList.remove('hidden'); label.innerText = "Name of Trainee"; input.required = true; }
+        else { field.classList.add('hidden'); input.required = false; }
     }
 
     async function handleSubmission(e) {
@@ -348,6 +340,7 @@
         const form = new FormData(e.target);
         const file = document.getElementById('paymentProof').files[0];
         const base64 = await toBase64(file);
+        const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
 
         const payload = {
             customerName: form.get('customerName'),
@@ -356,20 +349,49 @@
             userType: form.get('userType'),
             relatedName: form.get('relatedName') || 'N/A',
             cart: cart,
-            totalAmount: cart.reduce((s, i) => s + (i.price * i.qty), 0),
+            totalAmount: totalAmount,
             paymentProofBase64: base64,
             mimeType: file.type
         };
 
-        await apiCall('SUBMIT_ORDER', payload);
-        alert("Order Submitted Successfully!");
+        const res = await apiCall('SUBMIT_ORDER', payload);
+        
+        // Save details for Success Screen
+        lastOrderDetails = {
+            id: res.data.orderId,
+            total: totalAmount,
+            customerName: payload.customerName,
+            cart: [...cart]
+        };
+
+        // Reset & Redirect
         cart = [];
         e.target.reset();
-        router('home');
         refreshAllViews();
+        
+        // Show Success View
+        document.getElementById('successOrderId').innerText = lastOrderDetails.id;
+        document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
+        router('success');
     }
 
-    // Admin Auth & Panel
+    function sendWhatsapp() {
+        if (!lastOrderDetails) return;
+
+        const targetNumber = appData.config.whatsappNum || ""; // No number = user picks contact
+        const itemsList = lastOrderDetails.cart.map(i => `- ${i.name} (x${i.qty})`).join('\n');
+        
+        const msg = `*New Order: ${lastOrderDetails.id}*\n` +
+                    `Name: ${lastOrderDetails.customerName}\n` +
+                    `Total: $${lastOrderDetails.total.toFixed(2)}\n\n` +
+                    `*Items:*\n${itemsList}\n\n` +
+                    `Payment proof uploaded via App.`;
+        
+        const url = `https://wa.me/${targetNumber}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    }
+
+    // --- ADMIN ---
     async function openAdminAuth() {
         const pin = prompt("Enter Admin PIN:");
         if (!pin) return;
@@ -385,6 +407,7 @@
         document.getElementById('adminEventName').innerText = appData.activeEventName;
         document.getElementById('editIntro').value = appData.config.intro || '';
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
+        document.getElementById('editWhatsapp').value = appData.config.whatsappNum || ''; // New Field
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         renderAdminProducts();
     }
@@ -403,6 +426,7 @@
         await apiCall('UPDATE_CONFIG', {
             intro: document.getElementById('editIntro').value,
             paymentInfo: document.getElementById('editPayment').value,
+            whatsappNum: document.getElementById('editWhatsapp').value, // Save new field
             adminPin: document.getElementById('editPin').value
         });
         alert("Settings Saved!");
@@ -446,7 +470,7 @@
         router('home');
     }
 
-    // Utils
+    // --- UTILS ---
     function router(view) {
         document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
         document.getElementById(`view-${view}`).classList.remove('hidden');
