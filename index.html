@@ -6,7 +6,6 @@
     <title>Fundraising Shop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
@@ -91,17 +90,12 @@
             <div class="flex items-center justify-center gap-2 mb-2">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/24/PayNow_logo.svg" alt="PayNow" class="h-8">
             </div>
-            
             <p class="text-sm font-bold text-gray-700">Scan to Pay: <span id="paynowTotalDisplay" class="text-purple-700 text-lg">$0.00</span></p>
             <p class="text-xs text-gray-500 mb-3">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
-
             <div class="flex justify-center mb-3">
                 <canvas id="qrCanvas" class="border p-2 rounded"></canvas>
             </div>
-            
-            <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded text-xs font-bold hover:bg-purple-200">
-                <i class="fas fa-download"></i> Download QR
-            </a>
+            <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded text-xs font-bold hover:bg-purple-200"><i class="fas fa-download"></i> Download QR</a>
         </div>
 
         <form id="checkoutForm" onsubmit="handleSubmission(event)" class="space-y-4 bg-white p-5 rounded shadow">
@@ -153,43 +147,31 @@
             <h2 class="text-2xl font-bold text-gray-800">Manager Dashboard</h2>
             <button onclick="adminLogout()" class="text-red-500 text-sm font-bold">Log Out</button>
         </div>
-
         <div class="bg-white p-4 rounded shadow mb-6">
             <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📅 Canvassing Event</h3>
             <p class="text-sm text-gray-500 mb-4">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
-            
-            <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700">
-                <i class="fas fa-table"></i> Open Orders Sheet
-            </button>
-
+            <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700"><i class="fas fa-table"></i> Open Orders Sheet</button>
             <div class="flex gap-2">
                 <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm">
                 <button onclick="createNewEvent()" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
             </div>
         </div>
-
         <div class="bg-white p-4 rounded shadow mb-6">
             <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Settings</h3>
             <div class="space-y-3">
                 <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
-                <!-- CHANGED LABEL -->
-                <div><label class="text-xs font-bold text-gray-500">PayNow Number (8 Digits Only)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm" placeholder="e.g. 91234567"></div>
+                <div><label class="text-xs font-bold text-gray-500">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm" placeholder="e.g. 91234567"></div>
                 <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
                 <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
             </div>
         </div>
-
-        <!-- PRODUCT MANAGEMENT -->
         <div class="bg-white p-4 rounded shadow mb-10">
             <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">📦 Manage Products</h3>
-            
             <div class="flex gap-2 mb-4">
                 <button onclick="saveOrder()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Order</button>
                 <button onclick="resetOrder()" class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
             </div>
-
             <div id="adminProductList" class="space-y-2 mb-6"></div>
-            
             <div class="bg-gray-50 p-3 rounded border">
                 <p class="text-xs font-bold text-gray-500 mb-2">ADD NEW PRODUCT</p>
                 <input type="text" id="newProdName" placeholder="Product Name" class="w-full p-2 border rounded mb-2 text-sm">
@@ -233,7 +215,6 @@
 
     function updateUI() {
         document.getElementById('displayIntro').innerText = appData.config.intro || '';
-        // Note: paymentInfo now holds the PayNow number
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
         renderProducts();
@@ -242,27 +223,16 @@
 
     function renderProducts() {
         const list = document.getElementById('productList');
-        if (appData.products.length === 0) {
-            list.innerHTML = `<p class="text-center text-gray-400 py-10">No items available. Admin needs to add products.</p>`;
-            return;
-        }
+        if (appData.products.length === 0) { list.innerHTML = `<p class="text-center text-gray-400 py-10">No items available.</p>`; return; }
         list.innerHTML = appData.products.map(p => {
             const inCart = cart.find(c => c.id === p.id);
             return `
             <div class="bg-white rounded-lg shadow flex overflow-hidden border border-gray-100 relative">
-                <div class="w-24 h-full bg-gray-200 shrink-0 absolute left-0 top-0 bottom-0">
-                    <img src="${p.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100?text=No+Img'">
-                </div>
+                <div class="w-24 h-full bg-gray-200 shrink-0 absolute left-0 top-0 bottom-0"><img src="${p.image}" class="w-full h-full object-cover"></div>
                 <div class="p-3 flex-1 flex flex-col justify-between pl-28 min-h-[100px]">
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-bold text-gray-800 text-sm">${p.name}</h3>
-                        <span class="text-blue-600 font-bold">$${p.price}</span>
-                    </div>
+                    <div class="flex justify-between items-start"><h3 class="font-bold text-gray-800 text-sm">${p.name}</h3><span class="text-blue-600 font-bold">$${p.price}</span></div>
                     <div class="self-end mt-2">
-                        ${ inCart 
-                            ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">+</button></div>` 
-                            : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`
-                        }
+                        ${ inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>` }
                     </div>
                 </div>
             </div>`
@@ -275,7 +245,6 @@
         document.getElementById('headerCartCount').innerText = cart.reduce((s, i) => s + i.qty, 0);
         const shopBtn = document.getElementById('shopViewCartBtn');
         if (shopBtn) shopBtn.innerText = `View Cart & Checkout ($${total.toFixed(2)})`;
-        
         const container = document.getElementById('cartItems');
         if (cart.length === 0) {
             container.innerHTML = '<div class="text-center text-gray-400 py-12 flex flex-col items-center"><i class="fas fa-shopping-basket text-4xl mb-3"></i><p>Your cart is empty</p></div>';
@@ -304,7 +273,6 @@
     }
     function refreshAllViews() { renderProducts(); renderCart(); }
 
-    // --- CHECKOUT ---
     function handleUserTypeChange() {
         const type = document.getElementById('userType').value;
         const field = document.getElementById('dynamicField');
@@ -315,133 +283,67 @@
         else { field.classList.add('hidden'); input.required = false; }
     }
 
-    // QR GENERATION
+    // --- PAYNOW QR GENERATOR (FIXED) ---
     function generatePayNowQR() {
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-        const uen = appData.config.paymentInfo; // Use stored PayNow Number
+        const uen = appData.config.paymentInfo; // 8 digit number
         
-        // Update Displays
         document.getElementById('paynowTotalDisplay').innerText = `$${totalAmount.toFixed(2)}`;
-        document.getElementById('paynowNumberDisplay').innerText = uen || "Set in Admin Settings";
+        document.getElementById('paynowNumberDisplay').innerText = uen ? "+65 " + uen : "Not Set";
 
         if (!uen || totalAmount <= 0) return;
 
-        // EMVCo Format Construction for SGQR PayNow
-        // Simplified Logic using a helper function to construct payload string
+        // Create Payload strictly following SGQR specs
         const payload = createPayNowPayload(uen, totalAmount);
 
-        // Generate QR
-        const qr = new QRious({
+        new QRious({
             element: document.getElementById('qrCanvas'),
             value: payload,
             size: 200,
             level: 'H'
         });
 
-        // Set Download Link
         const canvas = document.getElementById('qrCanvas');
-        const btn = document.getElementById('downloadQrBtn');
-        btn.href = canvas.toDataURL("image/png");
+        document.getElementById('downloadQrBtn').href = canvas.toDataURL("image/png");
     }
 
-    // HELPER: Construct SGQR PayNow Payload
-    // Format Reference: EMVCo + SGQR Specs
     function createPayNowPayload(number, amount) {
         const amtStr = amount.toFixed(2);
         
-        // Root 26: Merchant Account Information
-        // 00: GUID (SG.PAYNOW)
-        // 01: Proxy Type (0 = Mobile, 2 = UEN) -> We assume Mobile (0) if 8 digits, otherwise UEN?
-        // Actually for this app we strictly asked for 8 digit phone number. So Proxy Type = 0.
-        // 02: Proxy Value (The Number)
-        // 03: Editable (1 = yes, 0 = no) -> 0 fixed amount
-        
-        const proxyType = '0'; // Mobile
-        const proxyValue = number;
-        
-        const merchantInfo = 
-            `0009SG.PAYNOW` +
-            `0101${proxyType}` +
-            `02${pad(proxyValue.length)}${proxyValue}` +
-            `03010` + // Non-editable amount (preferable for fixed order)
-            `0415${momentDate()}`; // Expiry date (optional, putting fake future date/current date) or just omit 04
-            
-        // Actually simplified: 
-        // 26 (Merchant Acct)
-        //    00 (GUID): SG.PAYNOW
-        //    01 (Type): 0 (Mobile)
-        //    02 (Number): [number]
-        //    03 (Editable): 0
-        
-        const acctInfoContent = 
-            `0009SG.PAYNOW` + 
-            `01010` + 
-            `02${pad(number.length)}${number}` + 
-            `03010`;
-            
+        // 00: GUID
+        // 01: Type (0=Mobile)
+        // 02: Number (+65...)
+        // 03: Editable (0=No)
+        const proxy = `+65${number}`;
+        const acctInfoContent = `0009SG.PAYNOW0101002${pad(proxy.length)}${proxy}03010`;
         const acctInfo = `26${pad(acctInfoContent.length)}${acctInfoContent}`;
         
-        // 53: Currency (702 = SGD)
-        const currency = `5303702`;
-        
-        // 54: Amount
+        const mcc = `52040000`; // Merchant Category Code (Required by SGQR)
+        const currency = `5303702`; // SGD
         const amountField = `54${pad(amtStr.length)}${amtStr}`;
-        
-        // 58: Country Code (SG)
         const country = `5802SG`;
+        const name = `5911Fundraising`;
+        const city = `6009Singapore`;
         
-        // 59: Merchant Name (Fundraising)
-        const nameStr = "Fundraising";
-        const name = `59${pad(nameStr.length)}${nameStr}`;
+        // Header (00) + Point of Init (01 - Dynamic 12)
+        let raw = `000201010212` + acctInfo + mcc + currency + amountField + country + name + city + `6304`;
         
-        // 60: Merchant City (Singapore)
-        const cityStr = "Singapore";
-        const city = `60${pad(cityStr.length)}${cityStr}`;
-        
-        // 00: Payload Format Indicator
-        const header = `000201`;
-        
-        // 01: Point of Initiation Method (12 = Dynamic, 11 = Static)
-        const pointOfInit = `010212`; // Dynamic because amount is fixed
-        
-        let raw = header + pointOfInit + acctInfo + currency + amountField + country + name + city;
-        
-        // 63: CRC (Checksum)
-        raw += `6304`;
-        
-        const crc = calcCRC(raw);
-        return raw + crc;
+        return raw + calcCRC(raw);
     }
 
-    function pad(len) {
-        return len < 10 ? `0${len}` : `${len}`;
-    }
-
-    // CRC16-CCITT (0xFFFF) Implementation
+    function pad(len) { return len < 10 ? `0${len}` : `${len}`; }
     function calcCRC(str) {
         let crc = 0xFFFF;
         for (let i = 0; i < str.length; i++) {
             let c = str.charCodeAt(i);
             crc ^= (c << 8) & 0xFFFF;
             for (let j = 0; j < 8; j++) {
-                if (crc & 0x8000) {
-                    crc = (crc << 1) ^ 0x1021;
-                } else {
-                    crc = crc << 1;
-                }
+                if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+                else crc = crc << 1;
                 crc &= 0xFFFF;
             }
         }
         return crc.toString(16).toUpperCase().padStart(4, '0');
-    }
-
-    function momentDate() {
-        // YYYYMMDD
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = pad(d.getMonth() + 1);
-        const day = pad(d.getDate());
-        return `${y}${m}${day}`;
     }
 
     async function handleSubmission(e) {
@@ -489,7 +391,6 @@
         window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // --- ADMIN ---
     async function openAdminAuth() {
         const pin = prompt("Enter Admin PIN:");
         if (pin) {
@@ -505,7 +406,6 @@
         renderAdminProducts();
     }
     
-    // RENDER ADMIN LIST
     function renderAdminProducts() {
         const list = document.getElementById('adminProductList');
         if (appData.products.length === 0) list.innerHTML = "<p class='text-gray-500 text-sm'>No products added.</p>";
@@ -515,13 +415,9 @@
                      ${idx > 0 ? `<button onclick="moveProduct(${idx}, -1)" class="text-blue-500 hover:text-blue-700 font-bold">▲</button>` : '<span class="h-5"></span>'}
                      ${idx < appData.products.length - 1 ? `<button onclick="moveProduct(${idx}, 1)" class="text-blue-500 hover:text-blue-700 font-bold">▼</button>` : '<span class="h-5"></span>'}
                 </div>
-                <div class="flex-1 px-3">
-                    <div class="font-bold text-gray-700">${p.name}</div>
-                    <div class="text-xs text-gray-500">$${p.price}</div>
-                </div>
+                <div class="flex-1 px-3"><div class="font-bold text-gray-700">${p.name}</div><div class="text-xs text-gray-500">$${p.price}</div></div>
                 <button onclick="deleteProduct('${p.id}')" class="text-red-500 font-bold px-2">X</button>
-            </div>
-        `).join('');
+            </div>`).join('');
     }
 
     function moveProduct(idx, dir) {
@@ -530,13 +426,9 @@
         appData.products[idx + dir] = temp;
         renderAdminProducts();
     }
-    
     function openEventSheet() {
-        if (appData.activeSheetId) {
-            window.open(`https://docs.google.com/spreadsheets/d/${appData.activeSheetId}`, '_blank');
-        } else {
-            alert("No active sheet available.");
-        }
+        if (appData.activeSheetId) window.open(`https://docs.google.com/spreadsheets/d/${appData.activeSheetId}`, '_blank');
+        else alert("No active sheet available.");
     }
 
     async function saveOrder() {
@@ -545,21 +437,14 @@
         await apiCall('SAVE_ORDER', idList);
         alert("Order Saved!");
     }
-
     async function resetOrder() {
         if (!confirm("Reset to default Alphabetical order?")) return;
         await apiCall('RESET_ORDER');
         loadAppData().then(openAdminPanel);
     }
-
     async function saveSettings() {
-        // Validate PayNow Number
         const paynowVal = document.getElementById('editPayment').value;
-        if (!/^\d{8}$/.test(paynowVal)) {
-            alert("PayNow Number must be exactly 8 digits.");
-            return;
-        }
-
+        if (!/^\d{8}$/.test(paynowVal)) { alert("PayNow Number must be exactly 8 digits."); return; }
         await apiCall('UPDATE_CONFIG', { intro: document.getElementById('editIntro').value, paymentInfo: paynowVal, adminPin: document.getElementById('editPin').value });
         alert("Saved!"); loadAppData();
     }
@@ -571,38 +456,23 @@
         showLoading(true, "Compressing & Uploading...");
         const base64 = await compressImage(file, 0.5); 
         await apiCall('ADD_PRODUCT', { name, price, imageBase64: base64, mimeType: 'image/jpeg' });
-        document.getElementById('newProdName').value = '';
-        document.getElementById('newProdPrice').value = '';
-        document.getElementById('newProdImg').value = '';
-        alert("Product Added!");
-        loadAppData().then(openAdminPanel);
+        document.getElementById('newProdName').value = ''; document.getElementById('newProdPrice').value = ''; document.getElementById('newProdImg').value = '';
+        alert("Product Added!"); loadAppData().then(openAdminPanel);
     }
     async function deleteProduct(id) {
-        if(confirm("Delete product?")) {
-            await apiCall('DELETE_PRODUCT', id);
-            loadAppData().then(openAdminPanel);
-        }
+        if(confirm("Delete product?")) { await apiCall('DELETE_PRODUCT', id); loadAppData().then(openAdminPanel); }
     }
     async function createNewEvent() {
         const name = document.getElementById('newEventName').value;
-        if (name && confirm("Create new event?")) {
-            await apiCall('CREATE_EVENT', name);
-            alert("Event Created!");
-            loadAppData().then(openAdminPanel);
-        }
+        if (name && confirm("Create new event?")) { await apiCall('CREATE_EVENT', name); alert("Event Created!"); loadAppData().then(openAdminPanel); }
     }
     function adminLogout() { ADMIN_PIN = null; router('home'); }
 
-    // --- UTILS ---
     function router(view) {
         document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
         document.getElementById(`view-${view}`).classList.remove('hidden');
         window.scrollTo(0,0);
-        
-        // Trigger QR gen if entering checkout
-        if (view === 'checkout') {
-            generatePayNowQR();
-        }
+        if (view === 'checkout') generatePayNowQR();
     }
     function showLoading(show, text="Processing...") {
         const el = document.getElementById('loadingOverlay');
