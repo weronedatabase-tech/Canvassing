@@ -23,7 +23,7 @@
 <!-- LOADING OVERLAY -->
 <div id="loadingOverlay" class="fixed inset-0 bg-white/90 z-50 flex flex-col items-center justify-center hidden">
     <div class="loader"></div>
-    <p class="mt-4 font-semibold text-blue-600 animate-pulse">Processing...</p>
+    <p id="loadingText" class="mt-4 font-semibold text-blue-600 animate-pulse">Processing...</p>
 </div>
 
 <!-- HEADER -->
@@ -129,18 +129,19 @@
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase">Payment Screenshot</label>
                 <input type="file" id="paymentProof" accept="image/*" required class="w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <p class="text-xs text-gray-400 mt-1">Image will be compressed automatically.</p>
             </div>
             <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 mt-4 shadow">Submit Order</button>
         </form>
     </section>
 
-    <!-- PAGE: ORDER SUCCESS (NEW) -->
+    <!-- PAGE: ORDER SUCCESS -->
     <section id="view-success" class="p-6 hidden fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <div class="bg-green-100 p-4 rounded-full mb-4">
             <i class="fas fa-check text-4xl text-green-600"></i>
         </div>
         <h2 class="text-2xl font-bold text-green-700 mb-2">Order Submitted!</h2>
-        <p class="text-gray-600 text-center mb-6">Thank you for your support. Your order has been recorded.</p>
+        <p class="text-gray-600 text-center mb-6">Thank you for your support.</p>
         
         <div class="bg-white p-4 rounded shadow w-full mb-6">
              <p class="text-sm text-gray-500 font-bold uppercase">Order ID</p>
@@ -176,7 +177,7 @@
             <div class="space-y-3">
                 <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
                 <div><label class="text-xs font-bold text-gray-500">Payment Instructions</label><textarea id="editPayment" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
-                <div><label class="text-xs font-bold text-gray-500">Organizer WhatsApp No. (with Country Code)</label><input type="number" id="editWhatsapp" placeholder="e.g. 6591234567" class="w-full p-2 border rounded text-sm"></div>
+                <div><label class="text-xs font-bold text-gray-500">Organizer WhatsApp No.</label><input type="number" id="editWhatsapp" placeholder="e.g. 6591234567" class="w-full p-2 border rounded text-sm"></div>
                 <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
                 <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
             </div>
@@ -201,7 +202,7 @@
     // --- STATE ---
     let appData = { config: {}, products: [], activeEventName: '' };
     let cart = []; 
-    let lastOrderDetails = null; // Store for success page
+    let lastOrderDetails = null;
     let ADMIN_PIN = null;
 
     window.onload = loadAppData;
@@ -299,7 +300,6 @@
         }
     }
 
-    // --- ACTIONS ---
     function addToCart(id) {
         const product = appData.products.find(p => p.id === id);
         if (!product) return;
@@ -320,7 +320,7 @@
         renderCart();
     }
 
-    // --- CHECKOUT & WHATSAPP ---
+    // --- CHECKOUT LOGIC (COMPRESSION ADDED) ---
     function handleUserTypeChange() {
         const type = document.getElementById('userType').value;
         const field = document.getElementById('dynamicField');
@@ -339,8 +339,20 @@
 
         const form = new FormData(e.target);
         const file = document.getElementById('paymentProof').files[0];
-        const base64 = await toBase64(file);
+
+        // START COMPRESSION
+        showLoading(true, "Compressing Image...");
+        let base64 = null;
+        try {
+            base64 = await compressImage(file);
+        } catch(err) {
+            alert("Image Error");
+            showLoading(false);
+            return;
+        }
+
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        showLoading(true, "Uploading Order...");
 
         const payload = {
             customerName: form.get('customerName'),
@@ -351,47 +363,37 @@
             cart: cart,
             totalAmount: totalAmount,
             paymentProofBase64: base64,
-            mimeType: file.type
+            mimeType: 'image/jpeg' // Compression output is always jpeg
         };
 
-        const res = await apiCall('SUBMIT_ORDER', payload);
-        
-        // Save details for Success Screen
-        lastOrderDetails = {
-            id: res.data.orderId,
-            total: totalAmount,
-            customerName: payload.customerName,
-            cart: [...cart]
-        };
-
-        // Reset & Redirect
-        cart = [];
-        e.target.reset();
-        refreshAllViews();
-        
-        // Show Success View
-        document.getElementById('successOrderId').innerText = lastOrderDetails.id;
-        document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
-        router('success');
+        try {
+            const res = await apiCall('SUBMIT_ORDER', payload);
+            lastOrderDetails = {
+                id: res.data.orderId,
+                total: totalAmount,
+                customerName: payload.customerName,
+                cart: [...cart]
+            };
+            cart = [];
+            e.target.reset();
+            refreshAllViews();
+            document.getElementById('successOrderId').innerText = lastOrderDetails.id;
+            document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
+            router('success');
+        } catch(err) {
+            console.error(err);
+        }
     }
 
     function sendWhatsapp() {
         if (!lastOrderDetails) return;
-
-        const targetNumber = appData.config.whatsappNum || ""; // No number = user picks contact
+        const targetNumber = appData.config.whatsappNum || "";
         const itemsList = lastOrderDetails.cart.map(i => `- ${i.name} (x${i.qty})`).join('\n');
-        
-        const msg = `*New Order: ${lastOrderDetails.id}*\n` +
-                    `Name: ${lastOrderDetails.customerName}\n` +
-                    `Total: $${lastOrderDetails.total.toFixed(2)}\n\n` +
-                    `*Items:*\n${itemsList}\n\n` +
-                    `Payment proof uploaded via App.`;
-        
-        const url = `https://wa.me/${targetNumber}?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+        const msg = `*New Order: ${lastOrderDetails.id}*\nName: ${lastOrderDetails.customerName}\nTotal: $${lastOrderDetails.total.toFixed(2)}\n\n*Items:*\n${itemsList}\n\nPayment proof uploaded via App.`;
+        window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // --- ADMIN ---
+    // --- ADMIN & UTILS ---
     async function openAdminAuth() {
         const pin = prompt("Enter Admin PIN:");
         if (!pin) return;
@@ -407,7 +409,7 @@
         document.getElementById('adminEventName').innerText = appData.activeEventName;
         document.getElementById('editIntro').value = appData.config.intro || '';
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
-        document.getElementById('editWhatsapp').value = appData.config.whatsappNum || ''; // New Field
+        document.getElementById('editWhatsapp').value = appData.config.whatsappNum || '';
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         renderAdminProducts();
     }
@@ -426,7 +428,7 @@
         await apiCall('UPDATE_CONFIG', {
             intro: document.getElementById('editIntro').value,
             paymentInfo: document.getElementById('editPayment').value,
-            whatsappNum: document.getElementById('editWhatsapp').value, // Save new field
+            whatsappNum: document.getElementById('editWhatsapp').value,
             adminPin: document.getElementById('editPin').value
         });
         alert("Settings Saved!");
@@ -470,24 +472,50 @@
         router('home');
     }
 
-    // --- UTILS ---
     function router(view) {
         document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
         document.getElementById(`view-${view}`).classList.remove('hidden');
         window.scrollTo(0,0);
     }
     
-    function showLoading(show) {
+    function showLoading(show, text="Processing...") {
         const el = document.getElementById('loadingOverlay');
+        document.getElementById('loadingText').innerText = text;
         show ? el.classList.remove('hidden') : el.classList.add('hidden');
     }
 
-    const toBase64 = file => new Promise((res, rej) => {
-        const r = new FileReader();
-        r.readAsDataURL(file);
-        r.onload = () => res(r.result);
-        r.onerror = rej;
-    });
+    // --- IMAGE COMPRESSION UTIL ---
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const MAX_WIDTH = 1000; // Limit width to 1000px
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress to JPEG with 0.7 quality
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    }
 </script>
 </body>
 </html>
