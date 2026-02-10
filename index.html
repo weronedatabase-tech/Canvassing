@@ -57,7 +57,6 @@
     <!-- PAGE: SHOP -->
     <section id="view-shop" class="p-4 hidden fade-in">
         <div class="flex justify-between items-center mb-4">
-            <!-- UPDATED: Text changed to "Items" -->
             <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-store"></i> Items</h2>
             <button onclick="router('home')" class="text-sm text-blue-600 font-semibold hover:underline">
                 <i class="fas fa-arrow-left"></i> Home
@@ -65,7 +64,6 @@
         </div>
         <div id="productList" class="grid grid-cols-1 gap-4"></div>
         <div class="mt-6 text-center">
-            <!-- UPDATED: Button text will be updated dynamically via JS -->
             <button id="shopViewCartBtn" onclick="router('cart')" class="bg-gray-800 text-white px-6 py-3 rounded-full font-bold shadow-lg text-sm w-full max-w-xs transition hover:bg-gray-900">
                 View Cart & Checkout ($0.00)
             </button>
@@ -111,7 +109,10 @@
         <form id="checkoutForm" onsubmit="handleSubmission(event)" class="space-y-4 bg-white p-5 rounded shadow">
             <div><label class="block text-xs font-bold text-gray-500 uppercase">Full Name</label><input type="text" name="customerName" required class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Phone</label><input type="tel" name="contact" required class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">WhatsApp Number</label>
+                    <input type="tel" name="contact" id="contactInput" required placeholder="e.g. 91234567" class="w-full p-2 border rounded mt-1 bg-gray-50">
+                </div>
                 <div><label class="block text-xs font-bold text-gray-500 uppercase">Email</label><input type="email" name="email" required class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
             </div>
             <div>
@@ -143,7 +144,7 @@
             <i class="fas fa-check text-4xl text-green-600"></i>
         </div>
         <h2 class="text-2xl font-bold text-green-700 mb-2">Order Submitted!</h2>
-        <p class="text-gray-600 text-center mb-6">Thank you for your support.</p>
+        <p class="text-gray-600 text-center mb-6">WhatsApp confirmation launching...</p>
         
         <div class="bg-white p-4 rounded shadow w-full mb-6">
              <p class="text-sm text-gray-500 font-bold uppercase">Order ID</p>
@@ -153,7 +154,7 @@
         </div>
 
         <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3">
-            <i class="fab fa-whatsapp text-xl"></i> Send WhatsApp Summary
+            <i class="fab fa-whatsapp text-xl"></i> Open WhatsApp Summary
         </button>
         <button onclick="router('home')" class="text-blue-600 font-bold hover:underline">Back to Home</button>
     </section>
@@ -179,7 +180,6 @@
             <div class="space-y-3">
                 <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
                 <div><label class="text-xs font-bold text-gray-500">Payment Instructions</label><textarea id="editPayment" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
-                <div><label class="text-xs font-bold text-gray-500">Organizer WhatsApp No.</label><input type="number" id="editWhatsapp" placeholder="e.g. 6591234567" class="w-full p-2 border rounded text-sm"></div>
                 <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
                 <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
             </div>
@@ -278,7 +278,6 @@
         document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
         document.getElementById('headerCartCount').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
         
-        // UPDATED: Update the button text in Shop View
         const shopBtn = document.getElementById('shopViewCartBtn');
         if (shopBtn) {
             shopBtn.innerText = `View Cart & Checkout ($${total.toFixed(2)})`;
@@ -376,29 +375,53 @@
 
         try {
             const res = await apiCall('SUBMIT_ORDER', payload);
+            
             lastOrderDetails = {
                 id: res.data.orderId,
                 total: totalAmount,
                 customerName: payload.customerName,
+                contact: payload.contact, // Store contact for WhatsApp
                 cart: [...cart]
             };
+            
             cart = [];
             e.target.reset();
             refreshAllViews();
+            
+            // Show Success Page
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             router('success');
+
+            // ⚠️ AUTOMATICALLY TRIGGER WHATSAPP
+            setTimeout(sendWhatsapp, 500); // Small delay to allow DOM render
+
         } catch(err) {
             console.error(err);
+            alert("Submission error. Please try again.");
         }
     }
 
     function sendWhatsapp() {
         if (!lastOrderDetails) return;
-        const targetNumber = appData.config.whatsappNum || "";
+        
+        // Clean number and Add Country Code (Default 65 for SG if missing)
+        let num = lastOrderDetails.contact.replace(/\D/g, '');
+        if (num.length === 8) num = '65' + num;
+
         const itemsList = lastOrderDetails.cart.map(i => `- ${i.name} (x${i.qty})`).join('\n');
-        const msg = `*New Order: ${lastOrderDetails.id}*\nName: ${lastOrderDetails.customerName}\nTotal: $${lastOrderDetails.total.toFixed(2)}\n\n*Items:*\n${itemsList}\n\nPayment proof uploaded via App.`;
-        window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+        
+        const msg = `*Order Confirmation: ${lastOrderDetails.id}*\n` +
+                    `Name: ${lastOrderDetails.customerName}\n` +
+                    `Total: $${lastOrderDetails.total.toFixed(2)}\n\n` +
+                    `*Items Ordered:*\n${itemsList}\n\n` +
+                    `_This is an automated copy of your order._`;
+        
+        // Open WhatsApp
+        const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+        
+        // Try to open. If blocked, the user has the button on screen.
+        window.open(url, '_blank');
     }
 
     // --- ADMIN & UTILS ---
@@ -417,7 +440,7 @@
         document.getElementById('adminEventName').innerText = appData.activeEventName;
         document.getElementById('editIntro').value = appData.config.intro || '';
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
-        document.getElementById('editWhatsapp').value = appData.config.whatsappNum || '';
+        // Removed WhatsApp field
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         renderAdminProducts();
     }
@@ -436,7 +459,6 @@
         await apiCall('UPDATE_CONFIG', {
             intro: document.getElementById('editIntro').value,
             paymentInfo: document.getElementById('editPayment').value,
-            whatsappNum: document.getElementById('editWhatsapp').value,
             adminPin: document.getElementById('editPin').value
         });
         alert("Settings Saved!");
@@ -515,8 +537,6 @@
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // UPDATED: Compress to JPEG with 0.5 quality
                     resolve(canvas.toDataURL('image/jpeg', 0.5)); 
                 };
                 img.onerror = (err) => reject(err);
