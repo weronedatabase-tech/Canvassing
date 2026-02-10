@@ -119,12 +119,15 @@
     <section id="view-success" class="p-6 hidden fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <div class="bg-green-100 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600"></i></div>
         <h2 class="text-2xl font-bold text-green-700 mb-2">Order Submitted!</h2>
-        <p class="text-gray-600 text-center mb-6">WhatsApp confirmation launching...</p>
+        <p class="text-gray-600 text-center mb-6">Thank you for your support.</p>
         <div class="bg-white p-4 rounded shadow w-full mb-6">
              <p class="text-sm text-gray-500 font-bold uppercase">Order ID</p><p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 mb-2">ORD-XXXX</p>
              <p class="text-sm text-gray-500 font-bold uppercase">Total</p><p id="successTotal" class="text-xl font-bold text-blue-600">$0.00</p>
         </div>
-        <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3"><i class="fab fa-whatsapp text-xl"></i> Open WhatsApp</button>
+        <!-- UPDATED BUTTON TEXT -->
+        <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3 px-4 text-center text-sm">
+            <i class="fab fa-whatsapp text-xl shrink-0"></i> Send yourself the order confirmation via whatsapp
+        </button>
         <button onclick="router('home')" class="text-blue-600 font-bold hover:underline">Back to Home</button>
     </section>
 
@@ -139,7 +142,6 @@
             <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📅 Canvassing Event</h3>
             <p class="text-sm text-gray-500 mb-4">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
             
-            <!-- BUTTON: Open Google Sheet -->
             <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700">
                 <i class="fas fa-table"></i> Open Orders Sheet
             </button>
@@ -164,7 +166,6 @@
         <div class="bg-white p-4 rounded shadow mb-10">
             <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">📦 Manage Products</h3>
             
-            <!-- ORDER CONTROLS -->
             <div class="flex gap-2 mb-4">
                 <button onclick="saveOrder()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Order</button>
                 <button onclick="resetOrder()" class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
@@ -329,7 +330,7 @@
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             router('success');
-            setTimeout(sendWhatsapp, 1000);
+            // REMOVED: setTimeout(sendWhatsapp, 1000);
         } catch(err) { console.error(err); }
     }
 
@@ -384,7 +385,6 @@
         renderAdminProducts();
     }
     
-    // NEW FUNCTION: Open Event Sheet
     function openEventSheet() {
         if (appData.activeSheetId) {
             window.open(`https://docs.google.com/spreadsheets/d/${appData.activeSheetId}`, '_blank');
