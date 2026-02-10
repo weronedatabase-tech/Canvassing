@@ -57,15 +57,17 @@
     <!-- PAGE: SHOP -->
     <section id="view-shop" class="p-4 hidden fade-in">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-store"></i> Shop Items</h2>
+            <!-- UPDATED: Text changed to "Items" -->
+            <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-store"></i> Items</h2>
             <button onclick="router('home')" class="text-sm text-blue-600 font-semibold hover:underline">
                 <i class="fas fa-arrow-left"></i> Home
             </button>
         </div>
         <div id="productList" class="grid grid-cols-1 gap-4"></div>
         <div class="mt-6 text-center">
-            <button onclick="router('cart')" class="bg-gray-800 text-white px-6 py-2 rounded-full font-bold shadow-lg text-sm">
-                View Cart & Checkout
+            <!-- UPDATED: Button text will be updated dynamically via JS -->
+            <button id="shopViewCartBtn" onclick="router('cart')" class="bg-gray-800 text-white px-6 py-3 rounded-full font-bold shadow-lg text-sm w-full max-w-xs transition hover:bg-gray-900">
+                View Cart & Checkout ($0.00)
             </button>
         </div>
     </section>
@@ -276,6 +278,12 @@
         document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
         document.getElementById('headerCartCount').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
         
+        // UPDATED: Update the button text in Shop View
+        const shopBtn = document.getElementById('shopViewCartBtn');
+        if (shopBtn) {
+            shopBtn.innerText = `View Cart & Checkout ($${total.toFixed(2)})`;
+        }
+        
         const container = document.getElementById('cartItems');
         const summary = document.getElementById('cartSummary');
 
@@ -320,7 +328,7 @@
         renderCart();
     }
 
-    // --- CHECKOUT LOGIC (COMPRESSION ADDED) ---
+    // --- CHECKOUT LOGIC ---
     function handleUserTypeChange() {
         const type = document.getElementById('userType').value;
         const field = document.getElementById('dynamicField');
@@ -363,7 +371,7 @@
             cart: cart,
             totalAmount: totalAmount,
             paymentProofBase64: base64,
-            mimeType: 'image/jpeg' // Compression output is always jpeg
+            mimeType: 'image/jpeg' 
         };
 
         try {
@@ -487,7 +495,7 @@
     // --- IMAGE COMPRESSION UTIL ---
     function compressImage(file) {
         return new Promise((resolve, reject) => {
-            const MAX_WIDTH = 1000; // Limit width to 1000px
+            const MAX_WIDTH = 1000;
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (event) => {
@@ -508,8 +516,8 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress to JPEG with 0.7 quality
-                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    // UPDATED: Compress to JPEG with 0.5 quality
+                    resolve(canvas.toDataURL('image/jpeg', 0.5)); 
                 };
                 img.onerror = (err) => reject(err);
             };
