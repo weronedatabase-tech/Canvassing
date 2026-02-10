@@ -137,7 +137,13 @@
 
         <div class="bg-white p-4 rounded shadow mb-6">
             <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📅 Canvassing Event</h3>
-            <p class="text-sm text-gray-500 mb-2">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
+            <p class="text-sm text-gray-500 mb-4">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
+            
+            <!-- BUTTON: Open Google Sheet -->
+            <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700">
+                <i class="fas fa-table"></i> Open Orders Sheet
+            </button>
+
             <div class="flex gap-2">
                 <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm">
                 <button onclick="createNewEvent()" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
@@ -154,9 +160,18 @@
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded shadow">
-            <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📦 Manage Products</h3>
-            <div id="adminProductList" class="space-y-2 mb-4"></div>
+        <!-- PRODUCT MANAGEMENT -->
+        <div class="bg-white p-4 rounded shadow mb-10">
+            <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">📦 Manage Products</h3>
+            
+            <!-- ORDER CONTROLS -->
+            <div class="flex gap-2 mb-4">
+                <button onclick="saveOrder()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Order</button>
+                <button onclick="resetOrder()" class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
+            </div>
+
+            <div id="adminProductList" class="space-y-2 mb-6"></div>
+            
             <div class="bg-gray-50 p-3 rounded border">
                 <p class="text-xs font-bold text-gray-500 mb-2">ADD NEW PRODUCT</p>
                 <input type="text" id="newProdName" placeholder="Product Name" class="w-full p-2 border rounded mb-2 text-sm">
@@ -170,7 +185,7 @@
 </main>
 
 <script>
-    let appData = { config: {}, products: [], activeEventName: '' };
+    let appData = { config: {}, products: [], activeEventName: '', activeSheetId: null };
     let cart = []; 
     let lastOrderDetails = null;
     let ADMIN_PIN = null;
@@ -290,7 +305,7 @@
         const file = document.getElementById('paymentProof').files[0];
         
         showLoading(true, "Compressing Payment Proof...");
-        let base64 = await compressImage(file, 0.5); // Payment Proof Quality
+        let base64 = await compressImage(file, 0.5); 
 
         showLoading(true, "Submitting Order...");
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
@@ -342,11 +357,55 @@
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         renderAdminProducts();
     }
+    
+    // RENDER ADMIN LIST
     function renderAdminProducts() {
         const list = document.getElementById('adminProductList');
         if (appData.products.length === 0) list.innerHTML = "<p class='text-gray-500 text-sm'>No products added.</p>";
-        else list.innerHTML = appData.products.map(p => `<div class="flex justify-between items-center bg-gray-50 p-2 rounded border text-sm"><span>${p.name} ($${p.price})</span><button onclick="deleteProduct('${p.id}')" class="text-red-500 font-bold px-2">X</button></div>`).join('');
+        else list.innerHTML = appData.products.map((p, idx) => `
+            <div class="flex justify-between items-center bg-gray-50 p-2 rounded border text-sm">
+                <div class="flex gap-1 flex-col">
+                     ${idx > 0 ? `<button onclick="moveProduct(${idx}, -1)" class="text-blue-500 hover:text-blue-700 font-bold">▲</button>` : '<span class="h-5"></span>'}
+                     ${idx < appData.products.length - 1 ? `<button onclick="moveProduct(${idx}, 1)" class="text-blue-500 hover:text-blue-700 font-bold">▼</button>` : '<span class="h-5"></span>'}
+                </div>
+                <div class="flex-1 px-3">
+                    <div class="font-bold text-gray-700">${p.name}</div>
+                    <div class="text-xs text-gray-500">$${p.price}</div>
+                </div>
+                <button onclick="deleteProduct('${p.id}')" class="text-red-500 font-bold px-2">X</button>
+            </div>
+        `).join('');
     }
+
+    function moveProduct(idx, dir) {
+        const temp = appData.products[idx];
+        appData.products[idx] = appData.products[idx + dir];
+        appData.products[idx + dir] = temp;
+        renderAdminProducts();
+    }
+    
+    // NEW FUNCTION: Open Event Sheet
+    function openEventSheet() {
+        if (appData.activeSheetId) {
+            window.open(`https://docs.google.com/spreadsheets/d/${appData.activeSheetId}`, '_blank');
+        } else {
+            alert("No active sheet available.");
+        }
+    }
+
+    async function saveOrder() {
+        if (!confirm("Save this display order?")) return;
+        const idList = appData.products.map(p => p.id);
+        await apiCall('SAVE_ORDER', idList);
+        alert("Order Saved!");
+    }
+
+    async function resetOrder() {
+        if (!confirm("Reset to default Alphabetical order?")) return;
+        await apiCall('RESET_ORDER');
+        loadAppData().then(openAdminPanel);
+    }
+
     async function saveSettings() {
         await apiCall('UPDATE_CONFIG', { intro: document.getElementById('editIntro').value, paymentInfo: document.getElementById('editPayment').value, adminPin: document.getElementById('editPin').value });
         alert("Saved!"); loadAppData();
@@ -355,15 +414,10 @@
         const name = document.getElementById('newProdName').value;
         const price = document.getElementById('newProdPrice').value;
         const file = document.getElementById('newProdImg').files[0];
-        
         if (!name || !price || !file) return alert("All fields required");
-        
         showLoading(true, "Compressing & Uploading...");
-        // 0.5 Quality for Product Image
         const base64 = await compressImage(file, 0.5); 
-        
         await apiCall('ADD_PRODUCT', { name, price, imageBase64: base64, mimeType: 'image/jpeg' });
-        
         document.getElementById('newProdName').value = '';
         document.getElementById('newProdPrice').value = '';
         document.getElementById('newProdImg').value = '';
