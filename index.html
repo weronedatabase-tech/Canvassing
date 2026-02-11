@@ -45,7 +45,8 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 class="text-2xl font-bold text-blue-700 mb-4 text-center">Welcome!</h2>
             <div id="displayIntro" class="prose text-gray-600 mb-6 whitespace-pre-wrap">Loading...</div>
-            <button onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg">Start Shopping</button>
+            <div id="shopStatusBanner" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded text-center font-bold text-sm">Shop is Closed</div>
+            <button id="startShoppingBtn" onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg">Start Shopping</button>
         </div>
         <div class="text-center text-xs text-gray-400">Current Event: <span id="displayEventName">Loading...</span></div>
     </section>
@@ -55,6 +56,9 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-store"></i> Items</h2>
             <button onclick="router('home')" class="text-sm text-blue-600 font-semibold hover:underline"><i class="fas fa-arrow-left"></i> Home</button>
+        </div>
+        <div id="shopClosedMsg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm text-center font-bold">
+            The shop is currently closed. Ordering is unavailable.
         </div>
         <div id="productList" class="grid grid-cols-1 gap-4"></div>
         <div class="mt-6 text-center">
@@ -73,7 +77,7 @@
             <div class="bg-white p-4 rounded shadow border-t-4 border-blue-600 mb-4">
                 <div class="flex justify-between font-bold text-lg"><span>Total:</span><span id="cartTotal">$0.00</span></div>
             </div>
-            <button onclick="router('checkout')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold shadow-lg mb-3">Proceed to Checkout</button>
+            <button id="checkoutBtn" onclick="router('checkout')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold shadow-lg mb-3">Proceed to Checkout</button>
             <button onclick="router('shop')" class="w-full bg-gray-100 text-gray-600 py-3 rounded-lg font-bold">Continue Shopping</button>
         </div>
     </section>
@@ -88,7 +92,6 @@
         <!-- PAYNOW QR SECTION -->
         <div class="bg-white border-2 border-purple-800 p-4 rounded-lg mb-6 shadow-sm text-center">
             <div class="flex items-center justify-center gap-2 mb-2">
-                <!-- UPDATED LOGO URL -->
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-8">
             </div>
             
@@ -154,49 +157,83 @@
             <h2 class="text-2xl font-bold text-gray-800">Manager Dashboard</h2>
             <button onclick="adminLogout()" class="text-red-500 text-sm font-bold">Log Out</button>
         </div>
-        <div class="bg-white p-4 rounded shadow mb-6">
-            <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📅 Canvassing Event</h3>
-            <p class="text-sm text-gray-500 mb-4">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
-            <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700"><i class="fas fa-table"></i> Open Orders Sheet</button>
-            <div class="flex gap-2">
-                <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm">
-                <button onclick="createNewEvent()" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
+        
+        <!-- ADMIN TABS -->
+        <div class="flex border-b border-gray-300 mb-4">
+            <button onclick="switchAdminTab('dashboard')" id="tab-dashboard" class="flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600">Dashboard</button>
+            <button onclick="switchAdminTab('fulfillment')" id="tab-fulfillment" class="flex-1 py-2 font-bold text-gray-500">Fulfillment</button>
+        </div>
+
+        <!-- DASHBOARD TAB CONTENT -->
+        <div id="admin-panel-dashboard">
+            <div class="bg-white p-4 rounded shadow mb-6">
+                <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📅 Canvassing Event</h3>
+                <p class="text-sm text-gray-500 mb-4">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
+                <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700"><i class="fas fa-table"></i> Open Orders Sheet</button>
+                <div class="flex gap-2">
+                    <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm">
+                    <button onclick="createNewEvent()" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-6">
+                <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Settings</h3>
+                <div class="space-y-3">
+                    <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
+                    <div><label class="text-xs font-bold text-gray-500">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm" placeholder="e.g. 91234567"></div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Closing Date</label>
+                        <input type="date" id="editClosingDate" class="w-full p-2 border rounded text-sm">
+                        <p class="text-xs text-gray-400 mt-1">Orders prohibited after this date.</p>
+                    </div>
+                    <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
+                    <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded shadow mb-10">
+                <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">📦 Manage Products</h3>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="saveOrder()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Order</button>
+                    <button onclick="resetOrder()" class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
+                </div>
+                <div id="adminProductList" class="space-y-2 mb-6"></div>
+                <div class="bg-gray-50 p-3 rounded border">
+                    <p class="text-xs font-bold text-gray-500 mb-2">ADD NEW PRODUCT</p>
+                    <input type="text" id="newProdName" placeholder="Product Name" class="w-full p-2 border rounded mb-2 text-sm">
+                    <input type="number" id="newProdPrice" placeholder="Price ($)" class="w-full p-2 border rounded mb-2 text-sm">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Product Image</label>
+                    <input type="file" id="newProdImg" accept="image/*" class="w-full text-sm text-gray-500 mb-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <button onclick="addProduct()" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold">Upload & Add Product</button>
+                </div>
             </div>
         </div>
-        <div class="bg-white p-4 rounded shadow mb-6">
-            <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Settings</h3>
-            <div class="space-y-3">
-                <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
-                <div><label class="text-xs font-bold text-gray-500">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm" placeholder="e.g. 91234567"></div>
-                <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
-                <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
+
+        <!-- FULFILLMENT TAB CONTENT -->
+        <div id="admin-panel-fulfillment" class="hidden">
+            <div class="bg-white p-4 rounded shadow mb-4">
+                 <h3 class="font-bold text-gray-700 mb-2">Order Search</h3>
+                 <div class="flex gap-2">
+                     <input type="text" id="orderSearchInput" onkeyup="filterOrders()" placeholder="Search Name, Phone or Order ID..." class="flex-1 p-2 border rounded text-sm">
+                     <button onclick="loadAdminOrders()" class="bg-blue-600 text-white px-3 py-2 rounded"><i class="fas fa-sync"></i></button>
+                 </div>
+            </div>
+
+            <div id="orderListContainer" class="space-y-3 pb-10">
+                <!-- Orders injected here -->
+                <p class="text-center text-gray-400 py-4">Loading orders...</p>
             </div>
         </div>
-        <div class="bg-white p-4 rounded shadow mb-10">
-            <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">📦 Manage Products</h3>
-            <div class="flex gap-2 mb-4">
-                <button onclick="saveOrder()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Order</button>
-                <button onclick="resetOrder()" class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
-            </div>
-            <div id="adminProductList" class="space-y-2 mb-6"></div>
-            <div class="bg-gray-50 p-3 rounded border">
-                <p class="text-xs font-bold text-gray-500 mb-2">ADD NEW PRODUCT</p>
-                <input type="text" id="newProdName" placeholder="Product Name" class="w-full p-2 border rounded mb-2 text-sm">
-                <input type="number" id="newProdPrice" placeholder="Price ($)" class="w-full p-2 border rounded mb-2 text-sm">
-                <label class="block text-xs font-bold text-gray-500 mb-1">Product Image</label>
-                <input type="file" id="newProdImg" accept="image/*" class="w-full text-sm text-gray-500 mb-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                <button onclick="addProduct()" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold">Upload & Add Product</button>
-            </div>
-        </div>
+
     </section>
 </main>
+
 
 <script>
     let appData = { config: {}, products: [], activeEventName: '', activeSheetId: null };
     let cart = []; 
     let lastOrderDetails = null;
-    let currentOrderId = null; // Store ID when checkout starts
+    let currentOrderId = null; 
     let ADMIN_PIN = null;
+    let allOrders = []; // Store fetched orders for frontend filtering
 
     window.onload = loadAppData;
 
@@ -225,22 +262,58 @@
         document.getElementById('displayIntro').innerText = appData.config.intro || '';
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
+        document.getElementById('editClosingDate').value = appData.config.closingDate || '';
+        
+        checkShopStatus();
         renderProducts();
         renderCart();
     }
+    
+    function checkShopStatus() {
+        if (!appData.config.closingDate) return;
+        
+        const closeDate = new Date(appData.config.closingDate);
+        // Normalize to end of day? No, usually closing date means "Closed on this day" or "Until this day". 
+        // Let's assume if today > closeDate, it's closed.
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        const isClosed = today > closeDate;
+        
+        if (isClosed) {
+            document.getElementById('shopStatusBanner').classList.remove('hidden');
+            document.getElementById('startShoppingBtn').disabled = true;
+            document.getElementById('startShoppingBtn').innerText = "Shop Closed";
+            document.getElementById('startShoppingBtn').classList.add('bg-gray-400', 'cursor-not-allowed');
+            document.getElementById('startShoppingBtn').classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            
+            document.getElementById('shopClosedMsg').classList.remove('hidden');
+            document.getElementById('shopViewCartBtn').disabled = true;
+            document.getElementById('shopViewCartBtn').classList.add('bg-gray-400');
+        } else {
+             document.getElementById('shopStatusBanner').classList.add('hidden');
+             document.getElementById('shopClosedMsg').classList.add('hidden');
+        }
+        return isClosed;
+    }
 
     function renderProducts() {
+        const isClosed = checkShopStatus();
         const list = document.getElementById('productList');
         if (appData.products.length === 0) { list.innerHTML = `<p class="text-center text-gray-400 py-10">No items available.</p>`; return; }
         list.innerHTML = appData.products.map(p => {
             const inCart = cart.find(c => c.id === p.id);
+            const btnHtml = isClosed ? 
+                `<span class="text-xs text-red-500 font-bold">Unavailable</span>` :
+                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
+
             return `
             <div class="bg-white rounded-lg shadow flex overflow-hidden border border-gray-100 relative">
                 <div class="w-24 h-full bg-gray-200 shrink-0 absolute left-0 top-0 bottom-0"><img src="${p.image}" class="w-full h-full object-cover"></div>
                 <div class="p-3 flex-1 flex flex-col justify-between pl-28 min-h-[100px]">
                     <div class="flex justify-between items-start"><h3 class="font-bold text-gray-800 text-sm">${p.name}</h3><span class="text-blue-600 font-bold">$${p.price}</span></div>
                     <div class="self-end mt-2">
-                        ${ inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>` }
+                        ${ btnHtml }
                     </div>
                 </div>
             </div>`
@@ -288,9 +361,7 @@
 
     // --- PAYNOW QR GENERATOR ---
     function generatePayNowQR() {
-        // Generate new ID if not exists
         currentOrderId = generateOrderId();
-        
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
         const uen = appData.config.paymentInfo; 
         
@@ -300,16 +371,8 @@
 
         if (!uen || totalAmount <= 0) return;
 
-        // Pass ID to Payload Generator
         const payload = createPayNowPayload(uen, totalAmount, currentOrderId);
-
-        new QRious({
-            element: document.getElementById('qrCanvas'),
-            value: payload,
-            size: 200,
-            level: 'H'
-        });
-
+        new QRious({ element: document.getElementById('qrCanvas'), value: payload, size: 200, level: 'H' });
         const canvas = document.getElementById('qrCanvas');
         document.getElementById('downloadQrBtn').href = canvas.toDataURL("image/png");
     }
@@ -317,29 +380,13 @@
     function createPayNowPayload(number, amount, refId) {
         const amtStr = amount.toFixed(2);
         const proxy = `+65${number}`;
-        
-        // Root 26: Merchant Acct Info
         const acctInfoContent = `0009SG.PAYNOW0101002${pad(proxy.length)}${proxy}03010`;
         const acctInfo = `26${pad(acctInfoContent.length)}${acctInfoContent}`;
-        
-        const mcc = `52040000`; 
-        const currency = `5303702`; 
-        const amountField = `54${pad(amtStr.length)}${amtStr}`;
-        const country = `5802SG`;
-        const name = `5911Fundraising`;
-        const city = `6009Singapore`;
-        
-        // Root 62: Additional Data Field (Reference)
-        // 01: Bill Number / Reference Number
         const refContent = `01${pad(refId.length)}${refId}`;
         const refField = `62${pad(refContent.length)}${refContent}`;
-        
-        // Construct
-        let raw = `000201010212` + acctInfo + mcc + currency + amountField + country + name + city + refField + `6304`;
-        
+        let raw = `000201010212` + acctInfo + `52040000` + `5303702` + `54${pad(amtStr.length)}${amtStr}` + `5802SG` + `5911Fundraising` + `6009Singapore` + refField + `6304`;
         return raw + calcCRC(raw);
     }
-
     function pad(len) { return len < 10 ? `0${len}` : `${len}`; }
     function calcCRC(str) {
         let crc = 0xFFFF;
@@ -357,12 +404,12 @@
 
     async function handleSubmission(e) {
         e.preventDefault();
+        if (checkShopStatus()) return alert("Shop is closed.");
         if (cart.length === 0) return alert("Cart empty");
         if (!confirm("Submit Order?")) return;
         
         const form = new FormData(e.target);
         const file = document.getElementById('paymentProof').files[0];
-        
         showLoading(true, "Compressing Payment Proof...");
         let base64 = await compressImage(file, 0.5); 
 
@@ -370,7 +417,7 @@
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
         
         const payload = {
-            orderId: currentOrderId, // Send the pre-generated ID
+            orderId: currentOrderId,
             customerName: form.get('customerName'),
             contact: form.get('contact'),
             email: form.get('email'),
@@ -407,15 +454,109 @@
             try { ADMIN_PIN = pin; await apiCall('VERIFY_ADMIN'); openAdminPanel(); } catch(e) { ADMIN_PIN = null; }
         }
     }
+    
     function openAdminPanel() {
         router('admin');
         document.getElementById('adminEventName').innerText = appData.activeEventName;
         document.getElementById('editIntro').value = appData.config.intro || '';
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
+        document.getElementById('editClosingDate').value = appData.config.closingDate || '';
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         renderAdminProducts();
+        switchAdminTab('dashboard'); // Default
     }
     
+    function switchAdminTab(tab) {
+        document.getElementById('admin-panel-dashboard').classList.add('hidden');
+        document.getElementById('admin-panel-fulfillment').classList.add('hidden');
+        document.getElementById('tab-dashboard').classList.remove('text-blue-600', 'border-blue-600');
+        document.getElementById('tab-dashboard').classList.add('text-gray-500');
+        document.getElementById('tab-fulfillment').classList.remove('text-blue-600', 'border-blue-600');
+        document.getElementById('tab-fulfillment').classList.add('text-gray-500');
+
+        document.getElementById(`admin-panel-${tab}`).classList.remove('hidden');
+        document.getElementById(`tab-${tab}`).classList.remove('text-gray-500');
+        document.getElementById(`tab-${tab}`).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+        
+        if (tab === 'fulfillment') loadAdminOrders();
+    }
+
+    async function loadAdminOrders() {
+        const container = document.getElementById('orderListContainer');
+        container.innerHTML = '<p class="text-center text-gray-400 py-4"><span class="loader inline-block w-5 h-5 border-2"></span> Loading...</p>';
+        try {
+            const res = await apiCall('GET_ORDERS');
+            // Group raw rows by OrderID. Since backend returns flattened items, let's group them or just display unique orders.
+            // Backend now returns objects per item. We need to group items under one Order ID for display.
+            const grouped = {};
+            res.data.forEach(item => {
+                if (!grouped[item.orderId]) {
+                    grouped[item.orderId] = { ...item, items: [] };
+                }
+                grouped[item.orderId].items.push({ name: item.item, qty: item.qty });
+                // If any row for this ID is uncollected, assume uncollected? Or just take the last status.
+                // Status is per row in sheet, but logically per order.
+                grouped[item.orderId].status = item.status; 
+            });
+            
+            allOrders = Object.values(grouped).reverse(); // Newest first
+            filterOrders();
+        } catch(e) {
+            container.innerHTML = '<p class="text-red-500 text-center">Failed to load orders.</p>';
+        }
+    }
+
+    function filterOrders() {
+        const search = document.getElementById('orderSearchInput').value.toLowerCase().replace(/\s/g, '');
+        const container = document.getElementById('orderListContainer');
+        
+        const filtered = allOrders.filter(o => {
+            const rawId = o.orderId.toLowerCase();
+            const rawName = o.customer.toLowerCase().replace(/\s/g, '');
+            const rawContact = String(o.contact).replace(/\D/g, '');
+            
+            return rawId.includes(search) || rawName.includes(search) || rawContact.includes(search);
+        });
+
+        if (filtered.length === 0) {
+             container.innerHTML = '<p class="text-center text-gray-400 py-4">No orders found.</p>';
+             return;
+        }
+
+        container.innerHTML = filtered.map(o => {
+            const isCollected = o.status === "Collected";
+            const itemsSummary = o.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+            return `
+            <div class="bg-white p-3 rounded shadow border-l-4 ${isCollected ? 'border-green-500' : 'border-yellow-500'}">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="font-mono font-bold text-gray-700">${o.orderId}</span>
+                        <span class="ml-2 text-xs font-bold px-2 py-0.5 rounded ${isCollected ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${o.status}</span>
+                    </div>
+                    ${!isCollected ? `<button onclick="markCollected('${o.orderId}')" class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">Mark Collected</button>` : ''}
+                </div>
+                <div class="text-sm font-bold text-gray-800">${o.customer}</div>
+                <div class="text-xs text-gray-500 mb-1">${o.contact}</div>
+                <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded">${itemsSummary}</div>
+            </div>`;
+        }).join('');
+    }
+
+    async function markCollected(id) {
+        if (!confirm(`Mark ${id} as Collected?`)) return;
+        try {
+            // Optimistic Update
+            const order = allOrders.find(o => o.orderId === id);
+            if (order) order.status = "Collected";
+            filterOrders();
+            
+            await apiCall('MARK_COLLECTED', { orderId: id });
+        } catch(e) {
+            alert("Error updating status");
+            loadAdminOrders(); // Revert on fail
+        }
+    }
+
     function renderAdminProducts() {
         const list = document.getElementById('adminProductList');
         if (appData.products.length === 0) list.innerHTML = "<p class='text-gray-500 text-sm'>No products added.</p>";
@@ -455,7 +596,12 @@
     async function saveSettings() {
         const paynowVal = document.getElementById('editPayment').value;
         if (!/^\d{8}$/.test(paynowVal)) { alert("PayNow Number must be exactly 8 digits."); return; }
-        await apiCall('UPDATE_CONFIG', { intro: document.getElementById('editIntro').value, paymentInfo: paynowVal, adminPin: document.getElementById('editPin').value });
+        await apiCall('UPDATE_CONFIG', { 
+            intro: document.getElementById('editIntro').value, 
+            paymentInfo: paynowVal, 
+            closingDate: document.getElementById('editClosingDate').value,
+            adminPin: document.getElementById('editPin').value 
+        });
         alert("Saved!"); loadAppData();
     }
     async function addProduct() {
@@ -482,7 +628,6 @@
         document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
         document.getElementById(`view-${view}`).classList.remove('hidden');
         window.scrollTo(0,0);
-        // TRIGGER QR GEN WHEN CHECKOUT STARTS
         if (view === 'checkout') generatePayNowQR();
     }
     function showLoading(show, text="Processing...") {
@@ -514,5 +659,3 @@
 </script>
 </body>
 </html>
-
-
