@@ -273,8 +273,6 @@
         if (!appData.config.closingDate) return;
         
         const closeDate = new Date(appData.config.closingDate);
-        // Normalize to end of day? No, usually closing date means "Closed on this day" or "Until this day". 
-        // Let's assume if today > closeDate, it's closed.
         const today = new Date();
         today.setHours(0,0,0,0);
         
@@ -486,16 +484,12 @@
         container.innerHTML = '<p class="text-center text-gray-400 py-4"><span class="loader inline-block w-5 h-5 border-2"></span> Loading...</p>';
         try {
             const res = await apiCall('GET_ORDERS');
-            // Group raw rows by OrderID. Since backend returns flattened items, let's group them or just display unique orders.
-            // Backend now returns objects per item. We need to group items under one Order ID for display.
             const grouped = {};
             res.data.forEach(item => {
                 if (!grouped[item.orderId]) {
                     grouped[item.orderId] = { ...item, items: [] };
                 }
                 grouped[item.orderId].items.push({ name: item.item, qty: item.qty });
-                // If any row for this ID is uncollected, assume uncollected? Or just take the last status.
-                // Status is per row in sheet, but logically per order.
                 grouped[item.orderId].status = item.status; 
             });
             
@@ -525,32 +519,44 @@
 
         container.innerHTML = filtered.map(o => {
             const isCollected = o.status === "Collected";
-            const itemsSummary = o.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+            // CHANGED: Display as List
+            const itemsList = o.items.map(i => `<li><span class="font-bold">${i.qty}x</span> ${i.name}</li>`).join('');
+            
+            // CHANGED: Toggle Button (Collected -> Undo)
+            const actionBtn = isCollected 
+                ? `<button onclick="updateStatus('${o.orderId}', 'Pending')" class="text-xs bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 shadow"><i class="fas fa-undo"></i> Undo</button>`
+                : `<button onclick="updateStatus('${o.orderId}', 'Collected')" class="text-xs bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 shadow"><i class="fas fa-check"></i> Mark Collected</button>`;
+
             return `
-            <div class="bg-white p-3 rounded shadow border-l-4 ${isCollected ? 'border-green-500' : 'border-yellow-500'}">
+            <div class="bg-white p-4 rounded shadow border-l-4 ${isCollected ? 'border-green-500' : 'border-yellow-500'}">
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <span class="font-mono font-bold text-gray-700">${o.orderId}</span>
-                        <span class="ml-2 text-xs font-bold px-2 py-0.5 rounded ${isCollected ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${o.status}</span>
+                        <span class="font-mono font-bold text-gray-700 text-lg">${o.orderId}</span>
+                        <span class="ml-2 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide ${isCollected ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${o.status}</span>
                     </div>
-                    ${!isCollected ? `<button onclick="markCollected('${o.orderId}')" class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">Mark Collected</button>` : ''}
+                    ${actionBtn}
                 </div>
-                <div class="text-sm font-bold text-gray-800">${o.customer}</div>
-                <div class="text-xs text-gray-500 mb-1">${o.contact}</div>
-                <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded">${itemsSummary}</div>
+                <div class="font-bold text-gray-800">${o.customer}</div>
+                <div class="text-sm text-gray-500 mb-2"><i class="fas fa-phone-alt text-xs mr-1"></i> ${o.contact}</div>
+                <ul class="list-disc pl-4 text-xs text-gray-700 bg-gray-50 p-2 rounded border border-gray-100">
+                    ${itemsList}
+                </ul>
             </div>`;
         }).join('');
     }
 
-    async function markCollected(id) {
-        if (!confirm(`Mark ${id} as Collected?`)) return;
+    // RENAMED from markCollected to updateStatus to handle both actions
+    async function updateStatus(id, newStatus) {
+        const actionName = newStatus === 'Collected' ? 'Mark as Collected' : 'Undo (Mark as Pending)';
+        if (!confirm(`${actionName} for ${id}?`)) return;
+        
         try {
             // Optimistic Update
             const order = allOrders.find(o => o.orderId === id);
-            if (order) order.status = "Collected";
+            if (order) order.status = newStatus;
             filterOrders();
             
-            await apiCall('MARK_COLLECTED', { orderId: id });
+            await apiCall('UPDATE_ORDER_STATUS', { orderId: id, status: newStatus });
         } catch(e) {
             alert("Error updating status");
             loadAdminOrders(); // Revert on fail
