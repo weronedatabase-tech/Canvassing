@@ -4,31 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fundraising Shop</title>
+    <!-- Configure Tailwind for Class-based Dark Mode -->
+    <script>
+        tailwind = { config: { darkMode: 'class' } }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- QR Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- SortableJS for Drag and Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans pb-20">
+<body class="bg-gray-50 text-gray-800 font-sans pb-20 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
 
 <script>
     // ⚠️ DEPLOYED WEB APP URL
     const API_URL = "https://script.google.com/macros/s/AKfycbxpgGDFHHhENaWSd50Vm70C5kioPu9nba89QDN4dJ8W-JsHsQfMZNJpIH_YqnlwROmf/exec"; 
 </script>
 
-<div id="loadingOverlay" class="fixed inset-0 bg-white/90 z-50 flex flex-col items-center justify-center hidden">
+<div id="loadingOverlay" class="fixed inset-0 bg-white/90 dark:bg-gray-900/90 z-50 flex flex-col items-center justify-center hidden">
     <div class="loader"></div>
     <p id="loadingText" class="mt-4 font-semibold text-blue-600 animate-pulse">Processing...</p>
 </div>
 
-<header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-40">
+<header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-40 dark:bg-blue-900">
     <div class="flex justify-between items-center max-w-lg mx-auto">
         <h1 class="font-bold text-lg cursor-pointer" onclick="router('home')">Fundraising Drive</h1>
-        <div class="flex gap-4">
+        <div class="flex gap-4 items-center">
+            <!-- Dark Mode Toggle -->
+            <button onclick="toggleDarkMode()" class="text-lg hover:text-blue-200 transition-transform hover:scale-110">
+                🌗
+            </button>
             <i class="fas fa-cog cursor-pointer hover:text-blue-200 mt-1" onclick="openAdminAuth()"></i>
             <div class="relative cursor-pointer" onclick="router('cart')">
                 <i class="fas fa-shopping-cart text-xl"></i>
@@ -42,11 +53,11 @@
     
     <!-- HOME -->
     <section id="view-home" class="p-6 fade-in">
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 class="text-2xl font-bold text-blue-700 mb-4 text-center">Welcome!</h2>
-            <div id="displayIntro" class="prose text-gray-600 mb-6 whitespace-pre-wrap">Loading...</div>
-            <div id="shopStatusBanner" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded text-center font-bold text-sm">Shop is Closed</div>
-            <button id="startShoppingBtn" onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg">Start Shopping</button>
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6 dark:bg-gray-800 dark:shadow-none dark:border dark:border-gray-700">
+            <h2 class="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-4 text-center">Welcome!</h2>
+            <div id="displayIntro" class="prose text-gray-600 dark:text-gray-300 mb-6 whitespace-pre-wrap">Loading...</div>
+            <div id="shopStatusBanner" class="hidden mb-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded text-center font-bold text-sm">Shop is Closed</div>
+            <button id="startShoppingBtn" onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg dark:shadow-none">Start Shopping</button>
         </div>
         <div class="text-center text-xs text-gray-400">Current Event: <span id="displayEventName">Loading...</span></div>
     </section>
@@ -55,14 +66,14 @@
     <section id="view-shop" class="p-4 hidden fade-in">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-store"></i> Items</h2>
-            <button onclick="router('home')" class="text-sm text-blue-600 font-semibold hover:underline"><i class="fas fa-arrow-left"></i> Home</button>
+            <button onclick="router('home')" class="text-sm text-blue-600 dark:text-blue-400 font-semibold hover:underline"><i class="fas fa-arrow-left"></i> Home</button>
         </div>
-        <div id="shopClosedMsg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm text-center font-bold">
+        <div id="shopClosedMsg" class="hidden bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-100 px-4 py-3 rounded relative mb-4 text-sm text-center font-bold">
             The shop is currently closed. Ordering is unavailable.
         </div>
         <div id="productList" class="grid grid-cols-1 gap-4"></div>
         <div class="mt-6 text-center">
-            <button id="shopViewCartBtn" onclick="router('cart')" class="bg-gray-800 text-white px-6 py-3 rounded-full font-bold shadow-lg text-sm w-full max-w-xs transition hover:bg-gray-900">View Cart & Checkout ($0.00)</button>
+            <button id="shopViewCartBtn" onclick="router('cart')" class="bg-gray-800 text-white px-6 py-3 rounded-full font-bold shadow-lg text-sm w-full max-w-xs transition hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600">View Cart & Checkout ($0.00)</button>
         </div>
     </section>
 
@@ -70,53 +81,53 @@
     <section id="view-cart" class="p-4 hidden fade-in">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold">Your Cart</h2>
-            <button onclick="router('shop')" class="text-sm text-blue-600 font-semibold hover:underline"><i class="fas fa-plus"></i> Shop More</button>
+            <button onclick="router('shop')" class="text-sm text-blue-600 dark:text-blue-400 font-semibold hover:underline"><i class="fas fa-plus"></i> Shop More</button>
         </div>
         <div id="cartItems" class="space-y-4 mb-6"></div>
         <div id="cartSummary" class="hidden">
-            <div class="bg-white p-4 rounded shadow border-t-4 border-blue-600 mb-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-t-4 border-blue-600 mb-4">
                 <div class="flex justify-between font-bold text-lg"><span>Total:</span><span id="cartTotal">$0.00</span></div>
             </div>
-            <button id="checkoutBtn" onclick="router('checkout')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold shadow-lg mb-3">Proceed to Checkout</button>
-            <button onclick="router('shop')" class="w-full bg-gray-100 text-gray-600 py-3 rounded-lg font-bold">Continue Shopping</button>
+            <button id="checkoutBtn" onclick="router('checkout')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold shadow-lg mb-3 hover:bg-green-700">Proceed to Checkout</button>
+            <button onclick="router('shop')" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 py-3 rounded-lg font-bold">Continue Shopping</button>
         </div>
     </section>
 
     <!-- CHECKOUT -->
     <section id="view-checkout" class="p-4 hidden fade-in">
         <div class="flex items-center gap-2 mb-4">
-             <button onclick="router('cart')" class="text-gray-500"><i class="fas fa-arrow-left"></i></button>
+             <button onclick="router('cart')" class="text-gray-500 dark:text-gray-400"><i class="fas fa-arrow-left"></i></button>
              <h2 class="text-xl font-bold">Payment & Submit</h2>
         </div>
         
         <!-- PAYNOW QR SECTION -->
-        <div class="bg-white border-2 border-purple-800 p-4 rounded-lg mb-6 shadow-sm text-center">
+        <div class="bg-white dark:bg-gray-800 border-2 border-purple-800 dark:border-purple-600 p-4 rounded-lg mb-6 shadow-sm text-center">
             <div class="flex items-center justify-center gap-2 mb-2">
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-8">
             </div>
             
-            <p class="text-sm font-bold text-gray-700">Scan to Pay: <span id="paynowTotalDisplay" class="text-purple-700 text-lg">$0.00</span></p>
-            <p class="text-xs text-gray-500 mb-1">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
-            <p class="text-xs text-purple-700 font-bold mb-3 bg-purple-100 inline-block px-2 py-1 rounded">Ref: <span id="paynowRefDisplay">---</span></p>
+            <p class="text-sm font-bold text-gray-700 dark:text-gray-200">Scan to Pay: <span id="paynowTotalDisplay" class="text-purple-700 dark:text-purple-400 text-lg">$0.00</span></p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
+            <p class="text-xs text-purple-700 dark:text-purple-300 font-bold mb-3 bg-purple-100 dark:bg-purple-900 inline-block px-2 py-1 rounded">Ref: <span id="paynowRefDisplay">---</span></p>
 
             <div class="flex justify-center mb-3">
-                <canvas id="qrCanvas" class="border p-2 rounded"></canvas>
+                <canvas id="qrCanvas" class="border p-2 rounded bg-white"></canvas>
             </div>
             
-            <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded text-xs font-bold hover:bg-purple-200">
+            <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="inline-block bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-4 py-2 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800">
                 <i class="fas fa-download"></i> Download QR
             </a>
         </div>
 
-        <form id="checkoutForm" onsubmit="handleSubmission(event)" class="space-y-4 bg-white p-5 rounded shadow">
-            <div><label class="block text-xs font-bold text-gray-500 uppercase">Full Name</label><input type="text" name="customerName" required class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
+        <form id="checkoutForm" onsubmit="handleSubmission(event)" class="space-y-4 bg-white dark:bg-gray-800 p-5 rounded shadow">
+            <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Full Name</label><input type="text" name="customerName" required class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></div>
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">WhatsApp No.</label><input type="tel" name="contact" id="contactInput" required placeholder="e.g. 91234567" class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Email</label><input type="email" name="email" required class="w-full p-2 border rounded mt-1 bg-gray-50"></div>
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">WhatsApp No.</label><input type="tel" name="contact" id="contactInput" required placeholder="e.g. 91234567" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></div>
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Email</label><input type="email" name="email" required class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></div>
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase">I am a...</label>
-                <select id="userType" name="userType" onchange="handleUserTypeChange()" required class="w-full p-2 border rounded mt-1 bg-white">
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">I am a...</label>
+                <select id="userType" name="userType" onchange="handleUserTypeChange()" required class="w-full p-2 border rounded mt-1 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Select...</option>
                     <option value="Volunteer">Volunteer</option>
                     <option value="Friend/Family">Friend of Volunteer</option>
@@ -125,12 +136,12 @@
                 </select>
             </div>
             <div id="dynamicField" class="hidden">
-                <label id="dynamicLabel" class="block text-xs font-bold text-gray-500 uppercase">Name</label>
-                <input type="text" id="relatedName" name="relatedName" class="w-full p-2 border rounded mt-1 bg-gray-50">
+                <label id="dynamicLabel" class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Name</label>
+                <input type="text" id="relatedName" name="relatedName" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase">Payment Screenshot</label>
-                <input type="file" id="paymentProof" accept="image/*" required class="w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Payment Screenshot</label>
+                <input type="file" id="paymentProof" accept="image/*" required class="w-full text-sm text-gray-500 mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300">
             </div>
             <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 mt-4 shadow">Submit Order</button>
         </form>
@@ -138,81 +149,135 @@
 
     <!-- SUCCESS -->
     <section id="view-success" class="p-6 hidden fade-in flex flex-col items-center justify-center min-h-[60vh]">
-        <div class="bg-green-100 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600"></i></div>
-        <h2 class="text-2xl font-bold text-green-700 mb-2">Order Submitted!</h2>
-        <p class="text-gray-600 text-center mb-6">Thank you for your support.</p>
-        <div class="bg-white p-4 rounded shadow w-full mb-6">
-             <p class="text-sm text-gray-500 font-bold uppercase">Order ID</p><p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 mb-2">ORD-XXXX</p>
-             <p class="text-sm text-gray-500 font-bold uppercase">Total</p><p id="successTotal" class="text-xl font-bold text-blue-600">$0.00</p>
+        <div class="bg-green-100 dark:bg-green-900 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600 dark:text-green-400"></i></div>
+        <h2 class="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Order Submitted!</h2>
+        <p class="text-gray-600 dark:text-gray-300 text-center mb-6">Thank you for your support.</p>
+        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow w-full mb-6">
+             <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Order ID</p><p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 dark:text-gray-100 mb-2">ORD-XXXX</p>
+             <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Total</p><p id="successTotal" class="text-xl font-bold text-blue-600 dark:text-blue-400">$0.00</p>
         </div>
         <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3 px-4 text-center text-sm">
             <i class="fab fa-whatsapp text-xl shrink-0"></i> Send yourself the order confirmation via whatsapp
         </button>
-        <button onclick="router('home')" class="text-blue-600 font-bold hover:underline">Back to Home</button>
+        <button onclick="router('home')" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Back to Home</button>
     </section>
 
     <!-- ADMIN -->
-    <section id="view-admin" class="p-4 hidden fade-in bg-gray-100 min-h-screen">
+    <section id="view-admin" class="p-4 hidden fade-in bg-gray-100 dark:bg-gray-900 min-h-screen">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Manager Dashboard</h2>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Manager Dashboard</h2>
             <button onclick="adminLogout()" class="text-red-500 text-sm font-bold">Log Out</button>
         </div>
         
         <!-- ADMIN TABS -->
-        <div class="flex border-b border-gray-300 mb-4">
-            <button onclick="switchAdminTab('dashboard')" id="tab-dashboard" class="flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600">Dashboard</button>
-            <button onclick="switchAdminTab('fulfillment')" id="tab-fulfillment" class="flex-1 py-2 font-bold text-gray-500">Fulfillment</button>
+        <div class="flex border-b border-gray-300 dark:border-gray-700 mb-4">
+            <button onclick="switchAdminTab('dashboard')" id="tab-dashboard" class="flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600 dark:text-blue-400 dark:border-blue-400">Dashboard</button>
+            <!-- NEW TAB -->
+            <button onclick="switchAdminTab('summary')" id="tab-summary" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">Summary</button>
+            <button onclick="switchAdminTab('fulfillment')" id="tab-fulfillment" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">Fulfillment</button>
         </div>
 
         <!-- DASHBOARD TAB CONTENT -->
         <div id="admin-panel-dashboard">
-            <div class="bg-white p-4 rounded shadow mb-6">
-                <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">📅 Canvassing Event</h3>
-                <p class="text-sm text-gray-500 mb-4">Current: <span id="adminEventName" class="font-mono text-black">Loading...</span></p>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
+                <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">📅 Canvassing Event</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Current: <span id="adminEventName" class="font-mono text-black dark:text-white">Loading...</span></p>
                 <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700"><i class="fas fa-table"></i> Open Orders Sheet</button>
                 <div class="flex gap-2">
-                    <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm">
-                    <button onclick="createNewEvent()" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
+                    <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <button onclick="createNewEvent()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded shadow mb-6">
-                <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">⚙️ App Settings</h3>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
+                <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">⚙️ App Settings</h3>
                 <div class="space-y-3">
-                    <div><label class="text-xs font-bold text-gray-500">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm"></textarea></div>
-                    <div><label class="text-xs font-bold text-gray-500">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm" placeholder="e.g. 91234567"></div>
+                    <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea></div>
+                    <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. 91234567"></div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500">Closing Date</label>
-                        <input type="date" id="editClosingDate" class="w-full p-2 border rounded text-sm">
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Closing Date</label>
+                        <div class="flex items-center gap-2">
+                             <input type="date" id="editClosingDate" class="p-2 border rounded text-sm flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white" onchange="updateDatePreview()">
+                             <span id="datePreview" class="text-sm font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap"></span>
+                        </div>
                         <p class="text-xs text-gray-400 mt-1">Orders prohibited after this date.</p>
                     </div>
-                    <div><label class="text-xs font-bold text-gray-500">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm"></div>
+                    <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">Admin PIN</label><input type="text" id="editPin" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></div>
                     <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded shadow mb-10">
-                <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">📦 Manage Products</h3>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-10">
+                <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 border-b dark:border-gray-700 pb-2">📦 Manage Products</h3>
                 <div class="flex gap-2 mb-4">
-                    <button onclick="saveOrder()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Order</button>
-                    <button onclick="resetOrder()" class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
+                    <!-- CHANGED: Renamed Save Order to Save Listing -->
+                    <button onclick="saveListing()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Listing</button>
+                    <button onclick="resetOrder()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
                 </div>
+                <!-- ID for SortableJS -->
                 <div id="adminProductList" class="space-y-2 mb-6"></div>
-                <div class="bg-gray-50 p-3 rounded border">
-                    <p class="text-xs font-bold text-gray-500 mb-2">ADD NEW PRODUCT</p>
-                    <input type="text" id="newProdName" placeholder="Product Name" class="w-full p-2 border rounded mb-2 text-sm">
-                    <input type="number" id="newProdPrice" placeholder="Price ($)" class="w-full p-2 border rounded mb-2 text-sm">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Product Image</label>
-                    <input type="file" id="newProdImg" accept="image/*" class="w-full text-sm text-gray-500 mb-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border dark:border-gray-600">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">ADD NEW PRODUCT</p>
+                    <input type="text" id="newProdName" placeholder="Product Name" class="w-full p-2 border rounded mb-2 text-sm dark:bg-gray-800 dark:border-gray-500 dark:text-white">
+                    <input type="number" id="newProdPrice" placeholder="Price ($)" class="w-full p-2 border rounded mb-2 text-sm dark:bg-gray-800 dark:border-gray-500 dark:text-white">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Product Image</label>
+                    <input type="file" id="newProdImg" accept="image/*" class="w-full text-sm text-gray-500 dark:text-gray-400 mb-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-600 dark:file:text-gray-200">
                     <button onclick="addProduct()" class="w-full bg-green-600 text-white py-2 rounded text-sm font-bold">Upload & Add Product</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUMMARY TAB CONTENT -->
+        <div id="admin-panel-summary" class="hidden">
+            <div id="summaryContent" class="space-y-6">
+                <!-- Standard Summaries -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-l-4 border-blue-500">
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Total Revenue</p>
+                        <p id="sumRevenue" class="text-2xl font-bold text-gray-800 dark:text-white">Loading...</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-l-4 border-green-500">
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Total Orders</p>
+                        <p id="sumOrders" class="text-2xl font-bold text-gray-800 dark:text-white">Loading...</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-l-4 border-purple-500 col-span-2">
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Top Selling Item</p>
+                        <p id="sumTopItem" class="text-lg font-bold text-gray-800 dark:text-white">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Configurable Summary -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+                    <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-3 border-b dark:border-gray-700 pb-2">📊 Detailed Breakdown</h3>
+                    <div class="mb-4">
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Group By:</label>
+                        <select id="summaryGroupBy" onchange="renderConfigurableSummary()" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="item">Product Item</option>
+                            <option value="userType">User Type (Volunteer/Public/etc)</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-200">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 rounded-l-lg">Group</th>
+                                    <th scope="col" class="px-4 py-3">Count</th>
+                                    <th scope="col" class="px-4 py-3 rounded-r-lg">Total ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryTableBody">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- FULFILLMENT TAB CONTENT -->
         <div id="admin-panel-fulfillment" class="hidden">
-            <div class="bg-white p-4 rounded shadow mb-4">
-                 <h3 class="font-bold text-gray-700 mb-2">Order Search</h3>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
+                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2">Order Search</h3>
                  <div class="flex gap-2">
-                     <input type="text" id="orderSearchInput" onkeyup="filterOrders()" placeholder="Search Name, Phone or Order ID..." class="flex-1 p-2 border rounded text-sm">
+                     <input type="text" id="orderSearchInput" onkeyup="filterOrders()" placeholder="Search Name, Phone or Order ID..." class="flex-1 p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                      <button onclick="loadAdminOrders()" class="bg-blue-600 text-white px-3 py-2 rounded"><i class="fas fa-sync"></i></button>
                  </div>
             </div>
@@ -233,9 +298,28 @@
     let lastOrderDetails = null;
     let currentOrderId = null; 
     let ADMIN_PIN = null;
-    let allOrders = []; // Store fetched orders for frontend filtering
+    let allOrders = []; 
+    let sortableInstance = null; // For Drag and Drop
 
-    window.onload = loadAppData;
+    // Initialize Dark Mode & App
+    window.onload = () => {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        loadAppData();
+    };
+
+    function toggleDarkMode() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+    }
 
     async function apiCall(action, payload = {}) {
         showLoading(true);
@@ -264,27 +348,37 @@
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
         
+        updateDatePreview();
         checkShopStatus();
         renderProducts();
         renderCart();
     }
     
+    function updateDatePreview() {
+        const val = document.getElementById('editClosingDate').value;
+        const el = document.getElementById('datePreview');
+        if (!val) { el.innerText = ''; return; }
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const parts = val.split('-');
+        if(parts.length < 3) return; 
+        const year = parts[0];
+        const month = months[parseInt(parts[1], 10) - 1];
+        const day = parseInt(parts[2], 10);
+        el.innerText = `${day} ${month} ${year}`;
+    }
+    
     function checkShopStatus() {
         if (!appData.config.closingDate) return;
-        
         const closeDate = new Date(appData.config.closingDate);
         const today = new Date();
         today.setHours(0,0,0,0);
-        
         const isClosed = today > closeDate;
-        
         if (isClosed) {
             document.getElementById('shopStatusBanner').classList.remove('hidden');
             document.getElementById('startShoppingBtn').disabled = true;
             document.getElementById('startShoppingBtn').innerText = "Shop Closed";
             document.getElementById('startShoppingBtn').classList.add('bg-gray-400', 'cursor-not-allowed');
             document.getElementById('startShoppingBtn').classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            
             document.getElementById('shopClosedMsg').classList.remove('hidden');
             document.getElementById('shopViewCartBtn').disabled = true;
             document.getElementById('shopViewCartBtn').classList.add('bg-gray-400');
@@ -303,13 +397,13 @@
             const inCart = cart.find(c => c.id === p.id);
             const btnHtml = isClosed ? 
                 `<span class="text-xs text-red-500 font-bold">Unavailable</span>` :
-                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 font-bold hover:bg-blue-200">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
+                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100 dark:border-blue-900"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">-</button><span class="w-8 text-center text-sm font-bold text-blue-800 dark:text-blue-200">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
 
             return `
-            <div class="bg-white rounded-lg shadow flex overflow-hidden border border-gray-100 relative">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex overflow-hidden border border-gray-100 dark:border-gray-700 relative">
                 <div class="w-24 h-full bg-gray-200 shrink-0 absolute left-0 top-0 bottom-0"><img src="${p.image}" class="w-full h-full object-cover"></div>
                 <div class="p-3 flex-1 flex flex-col justify-between pl-28 min-h-[100px]">
-                    <div class="flex justify-between items-start"><h3 class="font-bold text-gray-800 text-sm">${p.name}</h3><span class="text-blue-600 font-bold">$${p.price}</span></div>
+                    <div class="flex justify-between items-start"><h3 class="font-bold text-gray-800 dark:text-gray-100 text-sm">${p.name}</h3><span class="text-blue-600 dark:text-blue-400 font-bold">$${p.price}</span></div>
                     <div class="self-end mt-2">
                         ${ btnHtml }
                     </div>
@@ -331,9 +425,9 @@
         } else {
             document.getElementById('cartSummary').classList.remove('hidden');
             container.innerHTML = cart.map(item => `
-                <div class="flex justify-between items-center bg-white p-3 rounded shadow-sm border-l-4 border-blue-500">
-                    <div><div class="font-bold text-sm">${item.name}</div><div class="text-xs text-gray-500">$${item.price} x ${item.qty}</div></div>
-                    <div class="flex items-center gap-3"><button onclick="updateQty('${item.id}', -1)" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold">-</button><span class="text-sm font-bold w-4 text-center">${item.qty}</span><button onclick="updateQty('${item.id}', 1)" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold">+</button></div>
+                <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded shadow-sm border-l-4 border-blue-500">
+                    <div><div class="font-bold text-sm text-gray-800 dark:text-gray-100">${item.name}</div><div class="text-xs text-gray-500 dark:text-gray-400">$${item.price} x ${item.qty}</div></div>
+                    <div class="flex items-center gap-3"><button onclick="updateQty('${item.id}', -1)" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 font-bold">-</button><span class="text-sm font-bold w-4 text-center text-gray-800 dark:text-gray-100">${item.qty}</span><button onclick="updateQty('${item.id}', 1)" class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-bold">+</button></div>
                 </div>`).join('');
         }
     }
@@ -352,29 +446,21 @@
         else { field.classList.add('hidden'); input.required = false; }
     }
 
-    // --- ID GENERATION ---
-    function generateOrderId() {
-        return "ORD-" + Math.floor(1000 + Math.random() * 9000);
-    }
-
-    // --- PAYNOW QR GENERATOR ---
+    // --- ID GENERATION & QR ---
+    function generateOrderId() { return "ORD-" + Math.floor(1000 + Math.random() * 9000); }
     function generatePayNowQR() {
         currentOrderId = generateOrderId();
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
         const uen = appData.config.paymentInfo; 
-        
         document.getElementById('paynowTotalDisplay').innerText = `$${totalAmount.toFixed(2)}`;
         document.getElementById('paynowNumberDisplay').innerText = uen ? "+65 " + uen : "Not Set";
         document.getElementById('paynowRefDisplay').innerText = currentOrderId;
-
         if (!uen || totalAmount <= 0) return;
-
         const payload = createPayNowPayload(uen, totalAmount, currentOrderId);
         new QRious({ element: document.getElementById('qrCanvas'), value: payload, size: 200, level: 'H' });
         const canvas = document.getElementById('qrCanvas');
         document.getElementById('downloadQrBtn').href = canvas.toDataURL("image/png");
     }
-
     function createPayNowPayload(number, amount, refId) {
         const amtStr = amount.toFixed(2);
         const proxy = `+65${number}`;
@@ -405,15 +491,12 @@
         if (checkShopStatus()) return alert("Shop is closed.");
         if (cart.length === 0) return alert("Cart empty");
         if (!confirm("Submit Order?")) return;
-        
         const form = new FormData(e.target);
         const file = document.getElementById('paymentProof').files[0];
         showLoading(true, "Compressing Payment Proof...");
         let base64 = await compressImage(file, 0.5); 
-
         showLoading(true, "Submitting Order...");
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-        
         const payload = {
             orderId: currentOrderId,
             customerName: form.get('customerName'),
@@ -426,7 +509,6 @@
             paymentProofBase64: base64,
             mimeType: 'image/jpeg' 
         };
-
         try {
             const res = await apiCall('SUBMIT_ORDER', payload);
             lastOrderDetails = { id: res.data.orderId, total: totalAmount, customerName: payload.customerName, contact: payload.contact, cart: [...cart] };
@@ -461,27 +543,29 @@
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         renderAdminProducts();
-        switchAdminTab('dashboard'); // Default
+        switchAdminTab('dashboard'); 
     }
     
     function switchAdminTab(tab) {
-        document.getElementById('admin-panel-dashboard').classList.add('hidden');
-        document.getElementById('admin-panel-fulfillment').classList.add('hidden');
-        document.getElementById('tab-dashboard').classList.remove('text-blue-600', 'border-blue-600');
-        document.getElementById('tab-dashboard').classList.add('text-gray-500');
-        document.getElementById('tab-fulfillment').classList.remove('text-blue-600', 'border-blue-600');
-        document.getElementById('tab-fulfillment').classList.add('text-gray-500');
-
-        document.getElementById(`admin-panel-${tab}`).classList.remove('hidden');
-        document.getElementById(`tab-${tab}`).classList.remove('text-gray-500');
-        document.getElementById(`tab-${tab}`).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+        ['dashboard', 'summary', 'fulfillment'].forEach(t => {
+            const el = document.getElementById(`admin-panel-${t}`);
+            const btn = document.getElementById(`tab-${t}`);
+            if (t === tab) {
+                el.classList.remove('hidden');
+                btn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+                btn.classList.remove('text-gray-500', 'dark:text-gray-400');
+            } else {
+                el.classList.add('hidden');
+                btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600', 'dark:text-blue-400', 'dark:border-blue-400');
+                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+            }
+        });
         
-        if (tab === 'fulfillment') loadAdminOrders();
+        if (tab === 'fulfillment' || tab === 'summary') loadAdminOrders();
     }
 
     async function loadAdminOrders() {
-        const container = document.getElementById('orderListContainer');
-        container.innerHTML = '<p class="text-center text-gray-400 py-4"><span class="loader inline-block w-5 h-5 border-2"></span> Loading...</p>';
+        // Shared loading logic for both Summary and Fulfillment
         try {
             const res = await apiCall('GET_ORDERS');
             const grouped = {};
@@ -489,16 +573,86 @@
                 if (!grouped[item.orderId]) {
                     grouped[item.orderId] = { ...item, items: [] };
                 }
-                grouped[item.orderId].items.push({ name: item.item, qty: item.qty });
+                grouped[item.orderId].items.push({ name: item.item, qty: item.qty, price: (item.total/item.qty) }); // Derive single price roughly
                 grouped[item.orderId].status = item.status; 
             });
+            allOrders = Object.values(grouped).reverse();
             
-            allOrders = Object.values(grouped).reverse(); // Newest first
-            filterOrders();
+            // Render specific view based on visible tab
+            if (!document.getElementById('admin-panel-fulfillment').classList.contains('hidden')) {
+                filterOrders();
+            }
+            if (!document.getElementById('admin-panel-summary').classList.contains('hidden')) {
+                calculateSummaries(res.data);
+            }
+            
         } catch(e) {
-            container.innerHTML = '<p class="text-red-500 text-center">Failed to load orders.</p>';
+            console.error(e);
         }
     }
+
+    // --- SUMMARY TAB LOGIC ---
+    function calculateSummaries(rawData) {
+        // Standard Stats
+        const totalRev = rawData.reduce((acc, curr) => acc + curr.total, 0);
+        const uniqueOrders = new Set(rawData.map(r => r.orderId)).size;
+        
+        // Top Item
+        const itemCounts = {};
+        rawData.forEach(r => { itemCounts[r.item] = (itemCounts[r.item] || 0) + r.qty; });
+        let topItem = "N/A"; let topCount = 0;
+        Object.entries(itemCounts).forEach(([name, count]) => {
+            if (count > topCount) { topCount = count; topItem = name; }
+        });
+
+        document.getElementById('sumRevenue').innerText = `$${totalRev.toFixed(2)}`;
+        document.getElementById('sumOrders').innerText = uniqueOrders;
+        document.getElementById('sumTopItem').innerText = topCount > 0 ? `${topItem} (${topCount} sold)` : "N/A";
+
+        renderConfigurableSummary(rawData);
+    }
+
+    function renderConfigurableSummary(data = null) {
+        // If data not passed, we need to re-fetch or use stored? 
+        // For simplicity, we re-use loadAdminOrders flow, but here we assume data is processed.
+        // Actually, let's just re-use the allOrders derived from loadAdminOrders but we need raw lines for aggregation.
+        // Better to re-trigger loadAdminOrders if we are switching views, but for changing dropdown, we need raw data.
+        // Let's store rawData globally for simplicity in this context.
+        if (data) window.lastRawData = data;
+        const rows = window.lastRawData || [];
+        
+        const groupBy = document.getElementById('summaryGroupBy').value;
+        const tbody = document.getElementById('summaryTableBody');
+        tbody.innerHTML = '';
+
+        const agg = {};
+
+        rows.forEach(r => {
+            let key = "Unknown";
+            if (groupBy === 'item') {
+                key = r.item;
+            } else if (groupBy === 'userType') {
+                // Customer string format: "Name [UserType...]"
+                const match = r.customer.match(/\[(.*?)(?:[:\]])/);
+                key = match ? match[1] : "Other";
+            }
+
+            if (!agg[key]) agg[key] = { count: 0, total: 0 };
+            agg[key].count += (groupBy === 'item' ? r.qty : 1); // For UserType, count orders (lines), for Item, count Qty
+            agg[key].total += r.total;
+        });
+
+        Object.entries(agg).forEach(([key, val]) => {
+            tbody.innerHTML += `
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                    <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">${key}</td>
+                    <td class="px-4 py-2">${val.count}</td>
+                    <td class="px-4 py-2">$${val.total.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    }
+
 
     function filterOrders() {
         const search = document.getElementById('orderSearchInput').value.toLowerCase().replace(/\s/g, '');
@@ -508,7 +662,6 @@
             const rawId = o.orderId.toLowerCase();
             const rawName = o.customer.toLowerCase().replace(/\s/g, '');
             const rawContact = String(o.contact).replace(/\D/g, '');
-            
             return rawId.includes(search) || rawName.includes(search) || rawContact.includes(search);
         });
 
@@ -519,81 +672,83 @@
 
         container.innerHTML = filtered.map(o => {
             const isCollected = o.status === "Collected";
-            // CHANGED: Display as List
             const itemsList = o.items.map(i => `<li><span class="font-bold">${i.qty}x</span> ${i.name}</li>`).join('');
-            
-            // CHANGED: Toggle Button (Collected -> Undo)
             const actionBtn = isCollected 
                 ? `<button onclick="updateStatus('${o.orderId}', 'Pending')" class="text-xs bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 shadow"><i class="fas fa-undo"></i> Undo</button>`
                 : `<button onclick="updateStatus('${o.orderId}', 'Collected')" class="text-xs bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 shadow"><i class="fas fa-check"></i> Mark Collected</button>`;
 
             return `
-            <div class="bg-white p-4 rounded shadow border-l-4 ${isCollected ? 'border-green-500' : 'border-yellow-500'}">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-l-4 ${isCollected ? 'border-green-500' : 'border-yellow-500'}">
                 <div class="flex justify-between items-start mb-2">
                     <div>
-                        <span class="font-mono font-bold text-gray-700 text-lg">${o.orderId}</span>
-                        <span class="ml-2 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide ${isCollected ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${o.status}</span>
+                        <span class="font-mono font-bold text-gray-700 dark:text-gray-200 text-lg">${o.orderId}</span>
+                        <span class="ml-2 text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide ${isCollected ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'}">${o.status}</span>
                     </div>
                     ${actionBtn}
                 </div>
-                <div class="font-bold text-gray-800">${o.customer}</div>
-                <div class="text-sm text-gray-500 mb-2"><i class="fas fa-phone-alt text-xs mr-1"></i> ${o.contact}</div>
-                <ul class="list-disc pl-4 text-xs text-gray-700 bg-gray-50 p-2 rounded border border-gray-100">
+                <div class="font-bold text-gray-800 dark:text-gray-100">${o.customer}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2"><i class="fas fa-phone-alt text-xs mr-1"></i> ${o.contact}</div>
+                <ul class="list-disc pl-4 text-xs text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-100 dark:border-gray-600">
                     ${itemsList}
                 </ul>
             </div>`;
         }).join('');
     }
 
-    // RENAMED from markCollected to updateStatus to handle both actions
     async function updateStatus(id, newStatus) {
         const actionName = newStatus === 'Collected' ? 'Mark as Collected' : 'Undo (Mark as Pending)';
         if (!confirm(`${actionName} for ${id}?`)) return;
-        
         try {
-            // Optimistic Update
             const order = allOrders.find(o => o.orderId === id);
             if (order) order.status = newStatus;
             filterOrders();
-            
             await apiCall('UPDATE_ORDER_STATUS', { orderId: id, status: newStatus });
         } catch(e) {
             alert("Error updating status");
-            loadAdminOrders(); // Revert on fail
+            loadAdminOrders();
         }
     }
 
+    // --- DRAG AND DROP PRODUCTS ---
     function renderAdminProducts() {
         const list = document.getElementById('adminProductList');
         if (appData.products.length === 0) list.innerHTML = "<p class='text-gray-500 text-sm'>No products added.</p>";
-        else list.innerHTML = appData.products.map((p, idx) => `
-            <div class="flex justify-between items-center bg-gray-50 p-2 rounded border text-sm">
-                <div class="flex gap-1 flex-col">
-                     ${idx > 0 ? `<button onclick="moveProduct(${idx}, -1)" class="text-blue-500 hover:text-blue-700 font-bold">▲</button>` : '<span class="h-5"></span>'}
-                     ${idx < appData.products.length - 1 ? `<button onclick="moveProduct(${idx}, 1)" class="text-blue-500 hover:text-blue-700 font-bold">▼</button>` : '<span class="h-5"></span>'}
+        else {
+            list.innerHTML = appData.products.map((p) => `
+            <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded border dark:border-gray-600 text-sm" data-id="${p.id}">
+                <div class="handle cursor-move px-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                     <i class="fas fa-grip-lines"></i>
                 </div>
-                <div class="flex-1 px-3"><div class="font-bold text-gray-700">${p.name}</div><div class="text-xs text-gray-500">$${p.price}</div></div>
+                <div class="flex-1 px-3"><div class="font-bold text-gray-700 dark:text-white">${p.name}</div><div class="text-xs text-gray-500 dark:text-gray-400">$${p.price}</div></div>
                 <button onclick="deleteProduct('${p.id}')" class="text-red-500 font-bold px-2">X</button>
             </div>`).join('');
+            
+            // Initialize Sortable
+            if(sortableInstance) sortableInstance.destroy();
+            sortableInstance = new Sortable(list, {
+                handle: '.handle',
+                animation: 150,
+                ghostClass: 'bg-blue-100'
+            });
+        }
     }
 
-    function moveProduct(idx, dir) {
-        const temp = appData.products[idx];
-        appData.products[idx] = appData.products[idx + dir];
-        appData.products[idx + dir] = temp;
-        renderAdminProducts();
-    }
     function openEventSheet() {
         if (appData.activeSheetId) window.open(`https://docs.google.com/spreadsheets/d/${appData.activeSheetId}`, '_blank');
         else alert("No active sheet available.");
     }
 
-    async function saveOrder() {
+    async function saveListing() {
         if (!confirm("Save this display order?")) return;
-        const idList = appData.products.map(p => p.id);
+        // Get IDs from DOM to capture drag/drop order
+        const domItems = document.querySelectorAll('#adminProductList > div');
+        const idList = Array.from(domItems).map(el => el.getAttribute('data-id'));
+        
         await apiCall('SAVE_ORDER', idList);
-        alert("Order Saved!");
+        alert("Listing Saved!");
     }
+    
+    // ... rest of existing admin functions (resetOrder, saveSettings, addProduct, deleteProduct, createNewEvent, adminLogout, router, showLoading, compressImage)
     async function resetOrder() {
         if (!confirm("Reset to default Alphabetical order?")) return;
         await apiCall('RESET_ORDER');
@@ -629,7 +784,6 @@
         if (name && confirm("Create new event?")) { await apiCall('CREATE_EVENT', name); alert("Event Created!"); loadAppData().then(openAdminPanel); }
     }
     function adminLogout() { ADMIN_PIN = null; router('home'); }
-
     function router(view) {
         document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden'));
         document.getElementById(`view-${view}`).classList.remove('hidden');
