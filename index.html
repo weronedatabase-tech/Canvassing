@@ -179,7 +179,7 @@
     <section id="view-success" class="p-6 hidden fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <div class="bg-green-100 dark:bg-green-900 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600 dark:text-green-400"></i></div>
         <h2 class="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Order Submitted!</h2>
-        <p class="text-gray-600 dark:text-gray-300 text-center mb-6">Thank you for your support.</p>
+        <p class="text-gray-600 dark:text-gray-300 text-center mb-6">Thank you for your support.<br>A confirmation email has been sent.</p>
         <div class="bg-white dark:bg-gray-800 p-4 rounded shadow w-full mb-6">
              <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Order ID</p><p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 dark:text-gray-100 mb-2">ORD-XXXX</p>
              <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Total</p><p id="successTotal" class="text-xl font-bold text-blue-600 dark:text-blue-400">$0.00</p>
@@ -210,7 +210,6 @@
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">📅 Canvassing Event</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Current: <span id="adminEventName" class="font-mono text-black dark:text-white">Loading...</span></p>
                 
-                <!-- NEW: Event Switcher -->
                 <div class="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded">
                     <label class="text-xs font-bold text-gray-500 dark:text-gray-300 uppercase block mb-1">Switch Event</label>
                     <div class="flex gap-2">
@@ -507,12 +506,16 @@
         if (checkShopStatus()) return alert("Shop is closed.");
         if (cart.length === 0) return alert("Cart empty");
         if (!confirm("Submit Order?")) return;
+        
         const form = new FormData(e.target);
         const file = document.getElementById('paymentProof').files[0];
+        
         showLoading(true, "Compressing Payment Proof...");
         let base64 = await compressImage(file, 0.5); 
+        
         showLoading(true, "Submitting Order...");
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        
         const payload = {
             orderId: currentOrderId,
             customerName: form.get('customerName'),
@@ -525,13 +528,22 @@
             paymentProofBase64: base64,
             mimeType: 'image/jpeg' 
         };
+
         try {
             const res = await apiCall('SUBMIT_ORDER', payload);
             lastOrderDetails = { id: res.data.orderId, total: totalAmount, customerName: payload.customerName, contact: payload.contact, cart: [...cart] };
             cart = []; e.target.reset(); refreshAllViews();
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
+            
             router('success');
+            
+            // --- AUTO TRIGGER WHATSAPP ---
+            // Small delay to ensure the UI has transitioned
+            setTimeout(() => {
+                sendWhatsapp();
+            }, 500);
+
         } catch(err) { console.error(err); }
     }
 
@@ -559,14 +571,11 @@
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
         
-        // Fetch event list immediately
         loadEventList();
-        
         renderAdminProducts();
         switchAdminTab('dashboard'); 
     }
     
-    // NEW: Fetch and populate event list
     async function loadEventList() {
         const selector = document.getElementById('eventSelector');
         selector.innerHTML = '<option>Loading...</option>';
@@ -590,7 +599,6 @@
         loadAppData().then(() => {
              document.getElementById('adminEventName').innerText = appData.activeEventName;
              renderAdminProducts();
-             // Clear orders view as they don't apply anymore
              document.getElementById('orderListContainer').innerHTML = '<p class="text-center text-gray-400 py-4">Reloading orders...</p>';
              document.getElementById('summaryTableBody').innerHTML = '';
         });
