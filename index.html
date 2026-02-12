@@ -180,10 +180,27 @@
         <div class="bg-green-100 dark:bg-green-900 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600 dark:text-green-400"></i></div>
         <h2 class="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Order Submitted!</h2>
         <p class="text-gray-600 dark:text-gray-300 text-center mb-6">Thank you for your support.<br>A confirmation email has been sent.</p>
+        
         <div class="bg-white dark:bg-gray-800 p-4 rounded shadow w-full mb-6">
-             <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Order ID</p><p id="successOrderId" class="text-xl font-mono font-bold text-gray-800 dark:text-gray-100 mb-2">ORD-XXXX</p>
-             <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Total</p><p id="successTotal" class="text-xl font-bold text-blue-600 dark:text-blue-400">$0.00</p>
+             <div class="flex justify-between items-center mb-4">
+                 <span class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Order ID</span>
+                 <span id="successOrderId" class="text-xl font-mono font-bold text-gray-800 dark:text-gray-100">ORD-XXXX</span>
+             </div>
+             
+             <!-- NEW: SUMMARY SECTION -->
+             <div class="border-t border-b border-gray-200 dark:border-gray-700 py-3 mb-3">
+                 <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Order Summary</p>
+                 <div id="successSummary" class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                     <!-- Populated by JS -->
+                 </div>
+             </div>
+
+             <div class="flex justify-between items-center">
+                 <span class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase">Total</span>
+                 <span id="successTotal" class="text-xl font-bold text-blue-600 dark:text-blue-400">$0.00</span>
+             </div>
         </div>
+        
         <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3 px-4 text-center text-sm">
             <i class="fab fa-whatsapp text-xl shrink-0"></i> Send yourself the order confirmation via whatsapp
         </button>
@@ -536,10 +553,18 @@
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             
+            // --- NEW: POPULATE SUCCESS SUMMARY ---
+            const summaryHtml = lastOrderDetails.cart.map(i => `
+                <div class="flex justify-between">
+                    <span>${i.name} (x${i.qty})</span>
+                    <span class="font-mono">$${(i.price * i.qty).toFixed(2)}</span>
+                </div>
+            `).join('');
+            document.getElementById('successSummary').innerHTML = summaryHtml;
+
             router('success');
             
             // --- AUTO TRIGGER WHATSAPP ---
-            // Small delay to ensure the UI has transitioned
             setTimeout(() => {
                 sendWhatsapp();
             }, 500);
