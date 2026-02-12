@@ -201,8 +201,9 @@
              </div>
         </div>
         
+        <!-- CHANGED TEXT HERE -->
         <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3 px-4 text-center text-sm">
-            <i class="fab fa-whatsapp text-xl shrink-0"></i> Send yourself the order confirmation via whatsapp
+            <i class="fab fa-whatsapp text-xl shrink-0"></i> Press Here to send yourself the order confirmation via WhatsApp
         </button>
         <button onclick="router('home')" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Back to Home</button>
     </section>
@@ -247,6 +248,17 @@
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">⚙️ App Settings</h3>
                 <div class="space-y-3">
                     <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea></div>
+                    
+                    <!-- NEW: EMAIL CONFIGURATION -->
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Intro Message</label>
+                        <textarea id="editEmailIntro" rows="2" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text before order details..."></textarea>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Footer Message</label>
+                        <textarea id="editEmailFooter" rows="2" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text after order details..."></textarea>
+                    </div>
+
                     <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. 91234567"></div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Closing Date</label>
@@ -380,6 +392,10 @@
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
+        
+        // Populate Email Configs
+        document.getElementById('editEmailIntro').value = appData.config.emailIntro || '';
+        document.getElementById('editEmailFooter').value = appData.config.emailFooter || '';
         
         updateDatePreview();
         checkShopStatus();
@@ -553,7 +569,7 @@
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             
-            // --- NEW: POPULATE SUCCESS SUMMARY ---
+            // --- POPULATE SUCCESS SUMMARY ---
             const summaryHtml = lastOrderDetails.cart.map(i => `
                 <div class="flex justify-between">
                     <span>${i.name} (x${i.qty})</span>
@@ -564,10 +580,7 @@
 
             router('success');
             
-            // --- AUTO TRIGGER WHATSAPP ---
-            setTimeout(() => {
-                sendWhatsapp();
-            }, 500);
+            // --- AUTO TRIGGER REMOVED ---
 
         } catch(err) { console.error(err); }
     }
@@ -828,7 +841,10 @@
             intro: document.getElementById('editIntro').value, 
             paymentInfo: paynowVal, 
             closingDate: document.getElementById('editClosingDate').value,
-            adminPin: document.getElementById('editPin').value 
+            adminPin: document.getElementById('editPin').value,
+            // ADDED EMAIL SETTINGS
+            emailIntro: document.getElementById('editEmailIntro').value,
+            emailFooter: document.getElementById('editEmailFooter').value
         });
         alert("Saved!"); loadAppData();
     }
