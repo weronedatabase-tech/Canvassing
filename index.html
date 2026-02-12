@@ -27,6 +27,9 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         html.dark body { background-color: #111827; color: white; }
+        
+        /* Stop page scrolling when touching the drag handle */
+        .handle { touch-action: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans pb-20 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -187,7 +190,6 @@
                  <span id="successOrderId" class="text-xl font-mono font-bold text-gray-800 dark:text-gray-100">ORD-XXXX</span>
              </div>
              
-             <!-- NEW: SUMMARY SECTION -->
              <div class="border-t border-b border-gray-200 dark:border-gray-700 py-3 mb-3">
                  <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Order Summary</p>
                  <div id="successSummary" class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
@@ -201,7 +203,6 @@
              </div>
         </div>
         
-        <!-- CHANGED TEXT HERE -->
         <button onclick="sendWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 shadow-lg flex items-center justify-center gap-2 mb-3 px-4 text-center text-sm">
             <i class="fab fa-whatsapp text-xl shrink-0"></i> Press Here to send yourself the order confirmation via WhatsApp
         </button>
@@ -238,7 +239,16 @@
                     </div>
                 </div>
 
-                <button onclick="openEventSheet()" class="w-full bg-green-600 text-white py-2 rounded mb-4 font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700"><i class="fas fa-table"></i> Open Orders Sheet</button>
+                <!-- SIDE BY SIDE BUTTONS -->
+                <div class="flex gap-2 mb-4">
+                    <button onclick="openEventSheet()" class="flex-1 bg-green-600 text-white py-2 rounded font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700 text-sm">
+                        <i class="fas fa-table"></i> Open Sheet
+                    </button>
+                    <button onclick="openEventFolder()" class="flex-1 bg-gray-700 text-white py-2 rounded font-bold flex items-center justify-center gap-2 shadow hover:bg-gray-800 text-sm">
+                        <i class="fas fa-folder"></i> Open Folder
+                    </button>
+                </div>
+
                 <div class="flex gap-2">
                     <input type="text" id="newEventName" placeholder="New Event Name" class="flex-1 p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <button onclick="createNewEvent()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
@@ -247,16 +257,21 @@
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">⚙️ App Settings</h3>
                 <div class="space-y-3">
-                    <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">Introduction</label><textarea id="editIntro" rows="3" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea></div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Introduction</label>
+                        <!-- INCREASED HEIGHT -->
+                        <textarea id="editIntro" rows="10" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                    </div>
                     
-                    <!-- NEW: EMAIL CONFIGURATION -->
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Intro Message</label>
-                        <textarea id="editEmailIntro" rows="2" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text before order details..."></textarea>
+                        <!-- INCREASED HEIGHT & RESIZE -->
+                        <textarea id="editEmailIntro" rows="5" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text before order details..."></textarea>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Footer Message</label>
-                        <textarea id="editEmailFooter" rows="2" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text after order details..."></textarea>
+                        <!-- INCREASED HEIGHT & RESIZE -->
+                        <textarea id="editEmailFooter" rows="5" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text after order details..."></textarea>
                     </div>
 
                     <div><label class="text-xs font-bold text-gray-500 dark:text-gray-400">PayNow Number (8 Digits)</label><input type="tel" id="editPayment" maxlength="8" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. 91234567"></div>
@@ -393,7 +408,6 @@
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
         
-        // Populate Email Configs
         document.getElementById('editEmailIntro').value = appData.config.emailIntro || '';
         document.getElementById('editEmailFooter').value = appData.config.emailFooter || '';
         
@@ -569,7 +583,7 @@
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             
-            // --- POPULATE SUCCESS SUMMARY ---
+            // Populate Summary
             const summaryHtml = lastOrderDetails.cart.map(i => `
                 <div class="flex justify-between">
                     <span>${i.name} (x${i.qty})</span>
@@ -580,7 +594,7 @@
 
             router('success');
             
-            // --- AUTO TRIGGER REMOVED ---
+            // REMOVED AUTO WHATSAPP TRIGGER
 
         } catch(err) { console.error(err); }
     }
@@ -898,6 +912,12 @@
             };
             reader.onerror = reject;
         });
+    }
+    
+    // NEW: Open Folder function that was missing in previous steps
+    function openEventFolder() {
+        if (appData.activeFolderId) window.open(`https://drive.google.com/drive/folders/${appData.activeFolderId}`, '_blank');
+        else alert("No active folder available.");
     }
 </script>
 </body>
