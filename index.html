@@ -259,18 +259,15 @@
                 <div class="space-y-3">
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Introduction</label>
-                        <!-- INCREASED HEIGHT -->
                         <textarea id="editIntro" rows="10" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                     </div>
                     
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Intro Message</label>
-                        <!-- INCREASED HEIGHT & RESIZE -->
                         <textarea id="editEmailIntro" rows="5" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text before order details..."></textarea>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Footer Message</label>
-                        <!-- INCREASED HEIGHT & RESIZE -->
                         <textarea id="editEmailFooter" rows="5" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text after order details..."></textarea>
                     </div>
 
@@ -583,7 +580,7 @@
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             
-            // Populate Summary
+            // --- POPULATE SUCCESS SUMMARY ---
             const summaryHtml = lastOrderDetails.cart.map(i => `
                 <div class="flex justify-between">
                     <span>${i.name} (x${i.qty})</span>
@@ -594,8 +591,6 @@
 
             router('success');
             
-            // REMOVED AUTO WHATSAPP TRIGGER
-
         } catch(err) { console.error(err); }
     }
 
@@ -603,8 +598,17 @@
         if (!lastOrderDetails) return;
         let num = lastOrderDetails.contact.replace(/\D/g, '');
         if (num.length === 8) num = '65' + num;
-        const itemsList = lastOrderDetails.cart.map(i => `- ${i.name} (x${i.qty})`).join('\n');
-        const msg = `*Order Confirmation: ${lastOrderDetails.id}*\nName: ${lastOrderDetails.customerName}\nTotal: $${lastOrderDetails.total.toFixed(2)}\n\n*Items:*\n${itemsList}\n\n_Automated copy of your order._`;
+        
+        // --- MATCHING EMAIL FORMAT & CUSTOM CONFIG ---
+        const intro = appData.config.emailIntro || `Hi ${lastOrderDetails.customerName}, thank you for your support! We have received your order.`;
+        const footer = appData.config.emailFooter || "If you have any questions, please reply to this message.";
+        
+        const itemsList = lastOrderDetails.cart.map((i, index) => 
+            `${index+1}. ${i.name}\n   Qty: ${i.qty} | Sub: $${(i.price * i.qty).toFixed(2)}`
+        ).join('\n\n');
+
+        const msg = `*Order Confirmation*\n${intro}\n\n*Order ID:* ${lastOrderDetails.id}\n*Date:* ${new Date().toLocaleDateString()}\n\n*Items:*\n${itemsList}\n\n*Total: $${lastOrderDetails.total.toFixed(2)}*\n\n_${footer}_`;
+        
         window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
