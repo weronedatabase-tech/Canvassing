@@ -4,20 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fundraising Shop</title>
-    <!-- Configure Tailwind for Class-based Dark Mode -->
-    <script>
-        tailwind = { config: { darkMode: 'class' } }
-    </script>
+    
+    <!-- 1. Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Configure Tailwind immediately after loading -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            900: '#111827',
+                            800: '#1f2937',
+                            700: '#374151',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- QR Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-    <!-- SortableJS for Drag and Drop -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
     <style>
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        /* Prevent flicker on load */
+        html.dark body { background-color: #111827; color: white; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans pb-20 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -25,6 +43,33 @@
 <script>
     // ⚠️ DEPLOYED WEB APP URL
     const API_URL = "https://script.google.com/macros/s/AKfycbxpgGDFHHhENaWSd50Vm70C5kioPu9nba89QDN4dJ8W-JsHsQfMZNJpIH_YqnlwROmf/exec"; 
+    
+    // --- DARK MODE LOGIC (Defined immediately) ---
+    function initTheme() {
+        try {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch(e) { console.log("Theme init error", e); }
+    }
+    
+    function toggleDarkMode() {
+        try {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        } catch(e) { alert("Error toggling theme"); }
+    }
+
+    // Apply theme immediately
+    initTheme();
 </script>
 
 <div id="loadingOverlay" class="fixed inset-0 bg-white/90 dark:bg-gray-900/90 z-50 flex flex-col items-center justify-center hidden">
@@ -37,7 +82,7 @@
         <h1 class="font-bold text-lg cursor-pointer" onclick="router('home')">Fundraising Drive</h1>
         <div class="flex gap-4 items-center">
             <!-- Dark Mode Toggle -->
-            <button onclick="toggleDarkMode()" class="text-lg hover:text-blue-200 transition-transform hover:scale-110">
+            <button onclick="toggleDarkMode()" class="text-xl p-1 hover:text-blue-200 transition-transform hover:scale-110" title="Toggle Dark Mode">
                 🌗
             </button>
             <i class="fas fa-cog cursor-pointer hover:text-blue-200 mt-1" onclick="openAdminAuth()"></i>
@@ -172,7 +217,6 @@
         <!-- ADMIN TABS -->
         <div class="flex border-b border-gray-300 dark:border-gray-700 mb-4">
             <button onclick="switchAdminTab('dashboard')" id="tab-dashboard" class="flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600 dark:text-blue-400 dark:border-blue-400">Dashboard</button>
-            <!-- NEW TAB -->
             <button onclick="switchAdminTab('summary')" id="tab-summary" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">Summary</button>
             <button onclick="switchAdminTab('fulfillment')" id="tab-fulfillment" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">Fulfillment</button>
         </div>
@@ -208,11 +252,9 @@
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-10">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 border-b dark:border-gray-700 pb-2">📦 Manage Products</h3>
                 <div class="flex gap-2 mb-4">
-                    <!-- CHANGED: Renamed Save Order to Save Listing -->
                     <button onclick="saveListing()" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded shadow hover:bg-blue-700">💾 Save Listing</button>
                     <button onclick="resetOrder()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold py-2 rounded shadow hover:bg-gray-300">🔄 Reset A-Z</button>
                 </div>
-                <!-- ID for SortableJS -->
                 <div id="adminProductList" class="space-y-2 mb-6"></div>
                 <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border dark:border-gray-600">
                     <p class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">ADD NEW PRODUCT</p>
@@ -263,9 +305,7 @@
                                     <th scope="col" class="px-4 py-3 rounded-r-lg">Total ($)</th>
                                 </tr>
                             </thead>
-                            <tbody id="summaryTableBody">
-                                <!-- JS Populated -->
-                            </tbody>
+                            <tbody id="summaryTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -283,7 +323,6 @@
             </div>
 
             <div id="orderListContainer" class="space-y-3 pb-10">
-                <!-- Orders injected here -->
                 <p class="text-center text-gray-400 py-4">Loading orders...</p>
             </div>
         </div>
@@ -299,27 +338,10 @@
     let currentOrderId = null; 
     let ADMIN_PIN = null;
     let allOrders = []; 
-    let sortableInstance = null; // For Drag and Drop
+    let sortableInstance = null; 
 
-    // Initialize Dark Mode & App
-    window.onload = () => {
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        loadAppData();
-    };
-
-    function toggleDarkMode() {
-        if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        }
-    }
+    // Initialize App Data
+    window.onload = loadAppData;
 
     async function apiCall(action, payload = {}) {
         showLoading(true);
@@ -446,7 +468,6 @@
         else { field.classList.add('hidden'); input.required = false; }
     }
 
-    // --- ID GENERATION & QR ---
     function generateOrderId() { return "ORD-" + Math.floor(1000 + Math.random() * 9000); }
     function generatePayNowQR() {
         currentOrderId = generateOrderId();
@@ -565,7 +586,6 @@
     }
 
     async function loadAdminOrders() {
-        // Shared loading logic for both Summary and Fulfillment
         try {
             const res = await apiCall('GET_ORDERS');
             const grouped = {};
@@ -573,12 +593,12 @@
                 if (!grouped[item.orderId]) {
                     grouped[item.orderId] = { ...item, items: [] };
                 }
-                grouped[item.orderId].items.push({ name: item.item, qty: item.qty, price: (item.total/item.qty) }); // Derive single price roughly
+                grouped[item.orderId].items.push({ name: item.item, qty: item.qty, price: (item.total/item.qty) }); 
                 grouped[item.orderId].status = item.status; 
             });
             allOrders = Object.values(grouped).reverse();
-            
-            // Render specific view based on visible tab
+            window.lastRawData = res.data; 
+
             if (!document.getElementById('admin-panel-fulfillment').classList.contains('hidden')) {
                 filterOrders();
             }
@@ -591,13 +611,10 @@
         }
     }
 
-    // --- SUMMARY TAB LOGIC ---
     function calculateSummaries(rawData) {
-        // Standard Stats
         const totalRev = rawData.reduce((acc, curr) => acc + curr.total, 0);
         const uniqueOrders = new Set(rawData.map(r => r.orderId)).size;
         
-        // Top Item
         const itemCounts = {};
         rawData.forEach(r => { itemCounts[r.item] = (itemCounts[r.item] || 0) + r.qty; });
         let topItem = "N/A"; let topCount = 0;
@@ -609,18 +626,11 @@
         document.getElementById('sumOrders').innerText = uniqueOrders;
         document.getElementById('sumTopItem').innerText = topCount > 0 ? `${topItem} (${topCount} sold)` : "N/A";
 
-        renderConfigurableSummary(rawData);
+        renderConfigurableSummary();
     }
 
-    function renderConfigurableSummary(data = null) {
-        // If data not passed, we need to re-fetch or use stored? 
-        // For simplicity, we re-use loadAdminOrders flow, but here we assume data is processed.
-        // Actually, let's just re-use the allOrders derived from loadAdminOrders but we need raw lines for aggregation.
-        // Better to re-trigger loadAdminOrders if we are switching views, but for changing dropdown, we need raw data.
-        // Let's store rawData globally for simplicity in this context.
-        if (data) window.lastRawData = data;
+    function renderConfigurableSummary() {
         const rows = window.lastRawData || [];
-        
         const groupBy = document.getElementById('summaryGroupBy').value;
         const tbody = document.getElementById('summaryTableBody');
         tbody.innerHTML = '';
@@ -632,13 +642,12 @@
             if (groupBy === 'item') {
                 key = r.item;
             } else if (groupBy === 'userType') {
-                // Customer string format: "Name [UserType...]"
                 const match = r.customer.match(/\[(.*?)(?:[:\]])/);
                 key = match ? match[1] : "Other";
             }
 
             if (!agg[key]) agg[key] = { count: 0, total: 0 };
-            agg[key].count += (groupBy === 'item' ? r.qty : 1); // For UserType, count orders (lines), for Item, count Qty
+            agg[key].count += (groupBy === 'item' ? r.qty : 1);
             agg[key].total += r.total;
         });
 
@@ -652,7 +661,6 @@
             `;
         });
     }
-
 
     function filterOrders() {
         const search = document.getElementById('orderSearchInput').value.toLowerCase().replace(/\s/g, '');
@@ -709,7 +717,6 @@
         }
     }
 
-    // --- DRAG AND DROP PRODUCTS ---
     function renderAdminProducts() {
         const list = document.getElementById('adminProductList');
         if (appData.products.length === 0) list.innerHTML = "<p class='text-gray-500 text-sm'>No products added.</p>";
@@ -723,13 +730,14 @@
                 <button onclick="deleteProduct('${p.id}')" class="text-red-500 font-bold px-2">X</button>
             </div>`).join('');
             
-            // Initialize Sortable
-            if(sortableInstance) sortableInstance.destroy();
-            sortableInstance = new Sortable(list, {
-                handle: '.handle',
-                animation: 150,
-                ghostClass: 'bg-blue-100'
-            });
+            if(typeof Sortable !== 'undefined') {
+                if(sortableInstance) sortableInstance.destroy();
+                sortableInstance = new Sortable(list, {
+                    handle: '.handle',
+                    animation: 150,
+                    ghostClass: 'bg-blue-100'
+                });
+            }
         }
     }
 
@@ -740,15 +748,12 @@
 
     async function saveListing() {
         if (!confirm("Save this display order?")) return;
-        // Get IDs from DOM to capture drag/drop order
         const domItems = document.querySelectorAll('#adminProductList > div');
         const idList = Array.from(domItems).map(el => el.getAttribute('data-id'));
-        
         await apiCall('SAVE_ORDER', idList);
         alert("Listing Saved!");
     }
     
-    // ... rest of existing admin functions (resetOrder, saveSettings, addProduct, deleteProduct, createNewEvent, adminLogout, router, showLoading, compressImage)
     async function resetOrder() {
         if (!confirm("Reset to default Alphabetical order?")) return;
         await apiCall('RESET_ORDER');
