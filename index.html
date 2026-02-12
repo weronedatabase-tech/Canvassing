@@ -457,7 +457,7 @@
             const inCart = cart.find(c => c.id === p.id);
             const btnHtml = isClosed ? 
                 `<span class="text-xs text-red-500 font-bold">Unavailable</span>` :
-                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100 dark:border-blue-900"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">-</button><span class="w-8 text-center text-sm font-bold text-blue-800 dark:text-blue-200">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
+                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100 dark:border-blue-900"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
 
             return `
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex overflow-hidden border border-gray-100 dark:border-gray-700 relative">
@@ -580,7 +580,7 @@
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             
-            // --- POPULATE SUCCESS SUMMARY ---
+            // Populate Summary
             const summaryHtml = lastOrderDetails.cart.map(i => `
                 <div class="flex justify-between">
                     <span>${i.name} (x${i.qty})</span>
@@ -599,7 +599,6 @@
         let num = lastOrderDetails.contact.replace(/\D/g, '');
         if (num.length === 8) num = '65' + num;
         
-        // --- MATCHING EMAIL FORMAT & CUSTOM CONFIG ---
         const intro = appData.config.emailIntro || `Hi ${lastOrderDetails.customerName}, thank you for your support! We have received your order.`;
         const footer = appData.config.emailFooter || "If you have any questions, please reply to this message.";
         
