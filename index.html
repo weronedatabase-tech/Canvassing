@@ -28,8 +28,14 @@
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         html.dark body { background-color: #111827; color: white; }
         
-        /* Stop page scrolling when touching the drag handle */
         .handle { touch-action: none; }
+        
+        /* Rich Text Editor Styles */
+        .editor-toolbar button { padding: 4px 8px; margin-right: 2px; border-radius: 4px; border: 1px solid #ccc; background: #fff; color: #333; }
+        .editor-toolbar button:hover { background: #eee; }
+        .editor-content { min-height: 150px; overflow-y: auto; }
+        /* Banner Styles */
+        #displayBanner { max-height: 200px; width: 100%; object-fit: cover; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans pb-20 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -68,9 +74,10 @@
     <p id="loadingText" class="mt-4 font-semibold text-blue-600 animate-pulse">Processing...</p>
 </div>
 
-<header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-40 dark:bg-blue-900">
+<!-- COMPACT HEADER -->
+<header class="bg-blue-700 text-white py-2 px-4 shadow-md sticky top-0 z-40 dark:bg-blue-900">
     <div class="flex justify-between items-center max-w-lg mx-auto">
-        <h1 class="font-bold text-lg cursor-pointer" onclick="router('home')">Fundraising Drive</h1>
+        <h1 class="font-bold text-lg cursor-pointer" onclick="router('home')" id="appTitleDisplay">Fundraising Drive</h1>
         <div class="flex gap-4 items-center">
             <button onclick="toggleDarkMode()" class="text-xl p-1 hover:text-blue-200 transition-transform hover:scale-110" title="Toggle Dark Mode">🌗</button>
             <i class="fas fa-cog cursor-pointer hover:text-blue-200 mt-1" onclick="openAdminAuth()"></i>
@@ -86,11 +93,18 @@
     
     <!-- HOME -->
     <section id="view-home" class="p-6 fade-in">
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6 dark:bg-gray-800 dark:shadow-none dark:border dark:border-gray-700">
-            <h2 class="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-4 text-center">Welcome!</h2>
-            <div id="displayIntro" class="prose text-gray-600 dark:text-gray-300 mb-6 whitespace-pre-wrap">Loading...</div>
-            <div id="shopStatusBanner" class="hidden mb-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded text-center font-bold text-sm">Shop is Closed</div>
-            <button id="startShoppingBtn" onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg dark:shadow-none">Start Shopping</button>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6 dark:bg-gray-800 dark:shadow-none dark:border dark:border-gray-700">
+            <!-- BANNER IMAGE -->
+            <img id="displayBanner" src="" class="hidden w-full object-cover max-h-48">
+            
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-4 text-center">Welcome!</h2>
+                <!-- INTRO IS NOW HTML (Rich Text) -->
+                <div id="displayIntro" class="prose text-gray-600 dark:text-gray-300 mb-6">Loading...</div>
+                
+                <div id="shopStatusBanner" class="hidden mb-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded text-center font-bold text-sm">Shop is Closed</div>
+                <button id="startShoppingBtn" onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg dark:shadow-none">Start Shopping</button>
+            </div>
         </div>
         <div class="text-center text-xs text-gray-400">Current Event: <span id="displayEventName">Loading...</span></div>
     </section>
@@ -133,21 +147,25 @@
              <h2 class="text-xl font-bold">Payment & Submit</h2>
         </div>
         
-        <div class="bg-white dark:bg-gray-800 border-2 border-purple-800 dark:border-purple-600 p-4 rounded-lg mb-6 shadow-sm text-center">
-            <div class="flex items-center justify-center gap-2 mb-2">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-8">
+        <!-- COMPACT QR SECTION -->
+        <div class="bg-white dark:bg-gray-800 border-2 border-purple-800 dark:border-purple-600 p-3 rounded-lg mb-4 shadow-sm flex flex-row items-center gap-4">
+            <!-- Left: QR -->
+            <div class="shrink-0 bg-white p-1 rounded">
+                <canvas id="qrCanvas" class="w-24 h-24"></canvas>
             </div>
-            <p class="text-sm font-bold text-gray-700 dark:text-gray-200">Scan to Pay: <span id="paynowTotalDisplay" class="text-purple-700 dark:text-purple-400 text-lg">$0.00</span></p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
-            <p class="text-xs text-purple-700 dark:text-purple-300 font-bold mb-3 bg-purple-100 dark:bg-purple-900 inline-block px-2 py-1 rounded">Ref: <span id="paynowRefDisplay">---</span></p>
-
-            <div class="flex justify-center mb-3">
-                <canvas id="qrCanvas" class="border p-2 rounded bg-white"></canvas>
+            <!-- Right: Details -->
+            <div class="flex-1 text-left">
+                <div class="flex items-center gap-2 mb-1">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-5">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400">Scan to Pay</span>
+                </div>
+                <p id="paynowTotalDisplay" class="text-lg font-bold text-purple-700 dark:text-purple-400 leading-none mb-1">$0.00</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-purple-700 dark:text-purple-300 font-bold bg-purple-100 dark:bg-purple-900 px-2 py-0.5 rounded">Ref: <span id="paynowRefDisplay">---</span></span>
+                    <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="text-xs text-gray-400 hover:text-purple-600"><i class="fas fa-download"></i></a>
+                </div>
             </div>
-            
-            <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="inline-block bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-4 py-2 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800">
-                <i class="fas fa-download"></i> Download QR
-            </a>
         </div>
 
         <form id="checkoutForm" onsubmit="handleSubmission(event)" class="space-y-4 bg-white dark:bg-gray-800 p-5 rounded shadow">
@@ -182,7 +200,17 @@
     <section id="view-success" class="p-6 hidden fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <div class="bg-green-100 dark:bg-green-900 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600 dark:text-green-400"></i></div>
         <h2 class="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Order Submitted!</h2>
-        <p class="text-gray-600 dark:text-gray-300 text-center mb-6">Thank you for your support.<br>A confirmation email has been sent.</p>
+        
+        <!-- FOCUSED EMAIL MESSAGE -->
+        <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-3 mb-4 text-center">
+            <p class="text-sm text-blue-800 dark:text-blue-200">A confirmation email has been sent to <br><span id="successEmailDisplay" class="font-bold">...</span></p>
+        </div>
+
+        <!-- FOCUSED COLLECTION DETAILS -->
+        <div id="successCollectionDetails" class="hidden w-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded p-4 mb-6 text-center">
+            <p class="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase mb-1">Collection Details</p>
+            <p id="successFooterText" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"></p>
+        </div>
         
         <div class="bg-white dark:bg-gray-800 p-4 rounded shadow w-full mb-6">
              <div class="flex justify-between items-center mb-4">
@@ -192,9 +220,7 @@
              
              <div class="border-t border-b border-gray-200 dark:border-gray-700 py-3 mb-3">
                  <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Order Summary</p>
-                 <div id="successSummary" class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                     <!-- Populated by JS -->
-                 </div>
+                 <div id="successSummary" class="space-y-1 text-sm text-gray-700 dark:text-gray-300"></div>
              </div>
 
              <div class="flex justify-between items-center">
@@ -216,14 +242,12 @@
             <button onclick="adminLogout()" class="text-red-500 text-sm font-bold">Log Out</button>
         </div>
         
-        <!-- ADMIN TABS -->
         <div class="flex border-b border-gray-300 dark:border-gray-700 mb-4">
             <button onclick="switchAdminTab('dashboard')" id="tab-dashboard" class="flex-1 py-2 font-bold text-blue-600 border-b-2 border-blue-600 dark:text-blue-400 dark:border-blue-400">Dashboard</button>
             <button onclick="switchAdminTab('summary')" id="tab-summary" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">Summary</button>
             <button onclick="switchAdminTab('fulfillment')" id="tab-fulfillment" class="flex-1 py-2 font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">Fulfillment</button>
         </div>
 
-        <!-- DASHBOARD TAB CONTENT -->
         <div id="admin-panel-dashboard">
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">📅 Canvassing Event</h3>
@@ -239,7 +263,6 @@
                     </div>
                 </div>
 
-                <!-- SIDE BY SIDE BUTTONS -->
                 <div class="flex gap-2 mb-4">
                     <button onclick="openEventSheet()" class="flex-1 bg-green-600 text-white py-2 rounded font-bold flex items-center justify-center gap-2 shadow hover:bg-green-700 text-sm">
                         <i class="fas fa-table"></i> Open Sheet
@@ -254,12 +277,36 @@
                     <button onclick="createNewEvent()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded text-sm font-bold">Create New</button>
                 </div>
             </div>
+            
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">⚙️ App Settings</h3>
                 <div class="space-y-3">
+                    <!-- APP TITLE -->
                     <div>
-                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Introduction</label>
-                        <textarea id="editIntro" rows="10" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">App Title</label>
+                        <input type="text" id="editAppTitle" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- BANNER IMAGE UPLOAD -->
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Banner Image (Optional)</label>
+                        <input type="file" id="newBannerImg" accept="image/*" class="w-full text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <button onclick="uploadBanner()" class="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">Upload Banner</button>
+                    </div>
+
+                    <!-- RICH TEXT INTRO -->
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">Introduction (Rich Text)</label>
+                        <div class="border rounded dark:border-gray-600">
+                            <div class="bg-gray-100 dark:bg-gray-700 p-1 border-b dark:border-gray-600 editor-toolbar flex gap-1">
+                                <button type="button" onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
+                                <button type="button" onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
+                                <button type="button" onclick="formatDoc('underline')" title="Underline"><u>U</u></button>
+                                <button type="button" onclick="formatDoc('foreColor', prompt('Enter Color (e.g. red, #ff0000)'))" title="Text Color"><i class="fas fa-palette"></i></button>
+                                <button type="button" onclick="formatDoc('hiliteColor', 'yellow')" title="Highlight"><i class="fas fa-highlighter"></i></button>
+                            </div>
+                            <div id="editIntroRich" contenteditable="true" class="p-2 min-h-[150px] text-sm dark:text-white bg-white dark:bg-gray-700"></div>
+                        </div>
                     </div>
                     
                     <div>
@@ -267,7 +314,7 @@
                         <textarea id="editEmailIntro" rows="5" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text before order details..."></textarea>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Footer Message</label>
+                        <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Email Footer (Collection Details)</label>
                         <textarea id="editEmailFooter" rows="5" class="resize-y w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Text after order details..."></textarea>
                     </div>
 
@@ -284,6 +331,8 @@
                     <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Save Settings</button>
                 </div>
             </div>
+            
+            <!-- Products Panel (unchanged except wrapper) -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-10">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 border-b dark:border-gray-700 pb-2">📦 Manage Products</h3>
                 <div class="flex gap-2 mb-4">
@@ -302,10 +351,9 @@
             </div>
         </div>
 
-        <!-- SUMMARY TAB CONTENT -->
         <div id="admin-panel-summary" class="hidden">
+            <!-- Summary Tab Content (Unchanged) -->
             <div id="summaryContent" class="space-y-6">
-                <!-- Standard Summaries -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-l-4 border-blue-500">
                         <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Total Revenue</p>
@@ -320,15 +368,13 @@
                         <p id="sumTopItem" class="text-lg font-bold text-gray-800 dark:text-white">Loading...</p>
                     </div>
                 </div>
-
-                <!-- Configurable Summary -->
                 <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
                     <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-3 border-b dark:border-gray-700 pb-2">📊 Detailed Breakdown</h3>
                     <div class="mb-4">
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Group By:</label>
                         <select id="summaryGroupBy" onchange="renderConfigurableSummary()" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="item">Product Item</option>
-                            <option value="userType">User Type (Volunteer/Public/etc)</option>
+                            <option value="userType">User Type</option>
                         </select>
                     </div>
                     <div class="overflow-x-auto">
@@ -347,8 +393,8 @@
             </div>
         </div>
 
-        <!-- FULFILLMENT TAB CONTENT -->
         <div id="admin-panel-fulfillment" class="hidden">
+            <!-- Fulfillment Content (Unchanged) -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
                  <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2">Order Search</h3>
                  <div class="flex gap-2">
@@ -356,7 +402,6 @@
                      <button onclick="loadAdminOrders()" class="bg-blue-600 text-white px-3 py-2 rounded"><i class="fas fa-sync"></i></button>
                  </div>
             </div>
-
             <div id="orderListContainer" class="space-y-3 pb-10">
                 <p class="text-center text-gray-400 py-4">Loading orders...</p>
             </div>
@@ -374,6 +419,11 @@
     let ADMIN_PIN = null;
     let allOrders = []; 
     let sortableInstance = null; 
+
+    // Rich Text Helper
+    function formatDoc(cmd, value=null) {
+        document.execCommand(cmd, false, value);
+    }
 
     // Initialize App Data
     window.onload = loadAppData;
@@ -400,7 +450,24 @@
     }
 
     function updateUI() {
-        document.getElementById('displayIntro').innerText = appData.config.intro || '';
+        // App Title
+        document.title = appData.config.appTitle || "Fundraising Shop";
+        document.getElementById('appTitleDisplay').innerText = appData.config.appTitle || "Fundraising Drive";
+        document.getElementById('editAppTitle').value = appData.config.appTitle || "";
+
+        // Intro (Rich Text)
+        document.getElementById('displayIntro').innerHTML = appData.config.intro || '';
+        document.getElementById('editIntroRich').innerHTML = appData.config.intro || '';
+
+        // Banner Image
+        const bannerEl = document.getElementById('displayBanner');
+        if (appData.config.bannerImageId) {
+            bannerEl.src = "https://lh3.googleusercontent.com/d/" + appData.config.bannerImageId;
+            bannerEl.classList.remove('hidden');
+        } else {
+            bannerEl.classList.add('hidden');
+        }
+
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
         document.getElementById('displayEventName').innerText = appData.activeEventName || 'None';
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
@@ -414,6 +481,7 @@
         renderCart();
     }
     
+    // ... (updateDatePreview, checkShopStatus unchanged) ...
     function updateDatePreview() {
         const val = document.getElementById('editClosingDate').value;
         const el = document.getElementById('datePreview');
@@ -426,7 +494,6 @@
         const day = parseInt(parts[2], 10);
         el.innerText = `${day} ${month} ${year}`;
     }
-    
     function checkShopStatus() {
         if (!appData.config.closingDate) return;
         const closeDate = new Date(appData.config.closingDate);
@@ -449,6 +516,7 @@
         return isClosed;
     }
 
+    // UPDATED: Added Trash Icon
     function renderProducts() {
         const isClosed = checkShopStatus();
         const list = document.getElementById('productList');
@@ -457,7 +525,7 @@
             const inCart = cart.find(c => c.id === p.id);
             const btnHtml = isClosed ? 
                 `<span class="text-xs text-red-500 font-bold">Unavailable</span>` :
-                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100 dark:border-blue-900"><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">-</button><span class="w-8 text-center text-sm font-bold text-blue-800">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
+                (inCart ? `<div class="flex items-center bg-blue-50 rounded-lg overflow-hidden border border-blue-100 dark:border-blue-900"><button onclick="deleteItem('${p.id}')" class="w-8 h-8 flex items-center justify-center text-red-500 font-bold hover:bg-red-100 dark:hover:bg-red-900"><i class="fas fa-trash-alt text-xs"></i></button><button onclick="updateQty('${p.id}', -1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">-</button><span class="w-8 text-center text-sm font-bold text-blue-800 dark:text-blue-200">${inCart.qty}</span><button onclick="updateQty('${p.id}', 1)" class="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-200 dark:hover:bg-blue-900">+</button></div>` : `<button onclick="addToCart('${p.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-sm">Add to Cart</button>`);
 
             return `
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow flex overflow-hidden border border-gray-100 dark:border-gray-700 relative">
@@ -472,6 +540,7 @@
         }).join('');
     }
 
+    // UPDATED: Added Trash Icon
     function renderCart() {
         const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
         document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
@@ -487,13 +556,36 @@
             container.innerHTML = cart.map(item => `
                 <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded shadow-sm border-l-4 border-blue-500">
                     <div><div class="font-bold text-sm text-gray-800 dark:text-gray-100">${item.name}</div><div class="text-xs text-gray-500 dark:text-gray-400">$${item.price} x ${item.qty}</div></div>
-                    <div class="flex items-center gap-3"><button onclick="updateQty('${item.id}', -1)" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 font-bold">-</button><span class="text-sm font-bold w-4 text-center text-gray-800 dark:text-gray-100">${item.qty}</span><button onclick="updateQty('${item.id}', 1)" class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-bold">+</button></div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="deleteItem('${item.id}')" class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 font-bold hover:bg-red-200"><i class="fas fa-trash-alt text-xs"></i></button>
+                        <button onclick="updateQty('${item.id}', -1)" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 font-bold">-</button>
+                        <span class="text-sm font-bold w-4 text-center text-gray-800 dark:text-gray-100">${item.qty}</span>
+                        <button onclick="updateQty('${item.id}', 1)" class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-bold">+</button>
+                    </div>
                 </div>`).join('');
         }
     }
 
     function addToCart(id) { const product = appData.products.find(p => p.id === id); if (product) { cart.push({ ...product, qty: 1 }); refreshAllViews(); } }
-    function updateQty(id, change) { const index = cart.findIndex(item => item.id === id); if (index > -1) { cart[index].qty += change; if (cart[index].qty <= 0) cart.splice(index, 1); refreshAllViews(); } }
+    
+    function updateQty(id, change) { 
+        const index = cart.findIndex(item => item.id === id); 
+        if (index > -1) { 
+            cart[index].qty += change; 
+            if (cart[index].qty <= 0) cart.splice(index, 1); 
+            refreshAllViews(); 
+        } 
+    }
+    
+    // NEW: Remove item entirely
+    function deleteItem(id) {
+        const index = cart.findIndex(item => item.id === id);
+        if (index > -1) {
+            cart.splice(index, 1);
+            refreshAllViews();
+        }
+    }
+    
     function refreshAllViews() { renderProducts(); renderCart(); }
 
     function handleUserTypeChange() {
@@ -575,12 +667,14 @@
 
         try {
             const res = await apiCall('SUBMIT_ORDER', payload);
-            lastOrderDetails = { id: res.data.orderId, total: totalAmount, customerName: payload.customerName, contact: payload.contact, cart: [...cart] };
+            lastOrderDetails = { id: res.data.orderId, total: totalAmount, customerName: payload.customerName, email: payload.email, contact: payload.contact, cart: [...cart] };
             cart = []; e.target.reset(); refreshAllViews();
             document.getElementById('successOrderId').innerText = lastOrderDetails.id;
             document.getElementById('successTotal').innerText = `$${lastOrderDetails.total.toFixed(2)}`;
             
-            // Populate Summary
+            // Populate Success Screen Details
+            document.getElementById('successEmailDisplay').innerText = lastOrderDetails.email || "your email";
+            
             const summaryHtml = lastOrderDetails.cart.map(i => `
                 <div class="flex justify-between">
                     <span>${i.name} (x${i.qty})</span>
@@ -589,8 +683,17 @@
             `).join('');
             document.getElementById('successSummary').innerHTML = summaryHtml;
 
+            // Show collection details if they exist
+            const footerText = appData.config.emailFooter;
+            if(footerText) {
+                document.getElementById('successFooterText').innerText = footerText;
+                document.getElementById('successCollectionDetails').classList.remove('hidden');
+            } else {
+                document.getElementById('successCollectionDetails').classList.add('hidden');
+            }
+
             router('success');
-            
+
         } catch(err) { console.error(err); }
     }
 
@@ -621,7 +724,9 @@
     function openAdminPanel() {
         router('admin');
         document.getElementById('adminEventName').innerText = appData.activeEventName;
-        document.getElementById('editIntro').value = appData.config.intro || '';
+        // document.getElementById('editIntro').value = appData.config.intro || ''; // Removed, now using Rich Text
+        document.getElementById('editIntroRich').innerHTML = appData.config.intro || '';
+        
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
         document.getElementById('editClosingDate').value = appData.config.closingDate || '';
         document.getElementById('editPin').value = appData.config.adminPin || '1234';
@@ -855,16 +960,35 @@
         const paynowVal = document.getElementById('editPayment').value;
         if (!/^\d{8}$/.test(paynowVal)) { alert("PayNow Number must be exactly 8 digits."); return; }
         await apiCall('UPDATE_CONFIG', { 
-            intro: document.getElementById('editIntro').value, 
+            // INTRO IS NOW RICH TEXT (innerHTML)
+            intro: document.getElementById('editIntroRich').innerHTML, 
+            appTitle: document.getElementById('editAppTitle').value,
+            
             paymentInfo: paynowVal, 
             closingDate: document.getElementById('editClosingDate').value,
             adminPin: document.getElementById('editPin').value,
-            // ADDED EMAIL SETTINGS
             emailIntro: document.getElementById('editEmailIntro').value,
-            emailFooter: document.getElementById('editEmailFooter').value
+            emailFooter: document.getElementById('editEmailFooter').value,
+            // Banner is saved via separate action, ID is already in appData if not changed
+            bannerImageId: appData.config.bannerImageId 
         });
         alert("Saved!"); loadAppData();
     }
+    
+    // NEW: Banner Upload Logic
+    async function uploadBanner() {
+        const file = document.getElementById('newBannerImg').files[0];
+        if (!file) return alert("Select a file first");
+        showLoading(true, "Uploading Banner...");
+        try {
+            const base64 = await compressImage(file, 0.7);
+            const res = await apiCall('UPLOAD_BANNER', { imageBase64: base64, mimeType: 'image/jpeg' });
+            appData.config.bannerImageId = res.data.bannerId;
+            alert("Banner Uploaded! Don't forget to Save Settings.");
+        } catch(e) { alert("Upload failed"); } 
+        finally { showLoading(false); }
+    }
+
     async function addProduct() {
         const name = document.getElementById('newProdName').value;
         const price = document.getElementById('newProdPrice').value;
@@ -917,7 +1041,6 @@
         });
     }
     
-    // NEW: Open Folder function that was missing in previous steps
     function openEventFolder() {
         if (appData.activeFolderId) window.open(`https://drive.google.com/drive/folders/${appData.activeFolderId}`, '_blank');
         else alert("No active folder available.");
