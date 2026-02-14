@@ -30,11 +30,38 @@
         
         .handle { touch-action: none; }
         
-        /* Rich Text Editor Styles */
-        .editor-toolbar button { padding: 4px 8px; margin-right: 2px; border-radius: 4px; border: 1px solid #ccc; background: #fff; color: #333; }
-        .editor-toolbar button:hover { background: #eee; }
+        /* Editor Styles */
+        .editor-toolbar { display: flex; align-items: center; gap: 4px; }
+        .editor-toolbar button, .editor-toolbar label { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            border: 1px solid #ccc; 
+            background: #fff; 
+            color: #333; 
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            min-width: 32px;
+        }
+        .editor-toolbar button:hover, .editor-toolbar label:hover { background: #eee; }
         .editor-content { min-height: 150px; overflow-y: auto; }
-        /* Banner Styles */
+        
+        /* Color Picker Reset */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+
         #displayBanner { max-height: 200px; width: 100%; object-fit: cover; }
     </style>
 </head>
@@ -74,7 +101,6 @@
     <p id="loadingText" class="mt-4 font-semibold text-blue-600 animate-pulse">Processing...</p>
 </div>
 
-<!-- COMPACT HEADER -->
 <header class="bg-blue-700 text-white py-2 px-4 shadow-md sticky top-0 z-40 dark:bg-blue-900">
     <div class="flex justify-between items-center max-w-lg mx-auto">
         <h1 class="font-bold text-lg cursor-pointer" onclick="router('home')" id="appTitleDisplay">Fundraising Drive</h1>
@@ -94,14 +120,10 @@
     <!-- HOME -->
     <section id="view-home" class="p-6 fade-in">
         <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6 dark:bg-gray-800 dark:shadow-none dark:border dark:border-gray-700">
-            <!-- BANNER IMAGE -->
             <img id="displayBanner" src="" class="hidden w-full object-cover max-h-48">
-            
             <div class="p-6">
                 <h2 class="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-4 text-center">Welcome!</h2>
-                <!-- INTRO IS NOW HTML (Rich Text) -->
                 <div id="displayIntro" class="prose text-gray-600 dark:text-gray-300 mb-6">Loading...</div>
-                
                 <div id="shopStatusBanner" class="hidden mb-4 p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded text-center font-bold text-sm">Shop is Closed</div>
                 <button id="startShoppingBtn" onclick="router('shop')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg dark:shadow-none">Start Shopping</button>
             </div>
@@ -148,22 +170,38 @@
         </div>
         
         <!-- COMPACT QR SECTION -->
-        <div class="bg-white dark:bg-gray-800 border-2 border-purple-800 dark:border-purple-600 p-3 rounded-lg mb-4 shadow-sm flex flex-row items-center gap-4">
-            <!-- Left: QR -->
-            <div class="shrink-0 bg-white p-1 rounded">
-                <canvas id="qrCanvas" class="w-24 h-24"></canvas>
-            </div>
-            <!-- Right: Details -->
-            <div class="flex-1 text-left">
-                <div class="flex items-center gap-2 mb-1">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-5">
-                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400">Scan to Pay</span>
+        <div class="bg-white dark:bg-gray-800 border-2 border-purple-800 dark:border-purple-600 p-3 rounded-lg mb-4 shadow-sm">
+            <div class="flex flex-row items-center gap-4">
+                <!-- Left: QR and Download -->
+                <div class="flex flex-col items-center gap-2 shrink-0">
+                    <div class="bg-white p-1 rounded border dark:border-gray-600">
+                        <canvas id="qrCanvas" class="w-24 h-24"></canvas>
+                    </div>
+                    <!-- Download Button Below QR -->
+                    <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="w-full text-center bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800">
+                        <i class="fas fa-download"></i> Save QR
+                    </a>
                 </div>
-                <p id="paynowTotalDisplay" class="text-lg font-bold text-purple-700 dark:text-purple-400 leading-none mb-1">$0.00</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">To: <span id="paynowNumberDisplay" class="font-mono">Loading...</span></p>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-purple-700 dark:text-purple-300 font-bold bg-purple-100 dark:bg-purple-900 px-2 py-0.5 rounded">Ref: <span id="paynowRefDisplay">---</span></span>
-                    <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="text-xs text-gray-400 hover:text-purple-600"><i class="fas fa-download"></i></a>
+
+                <!-- Right: Details -->
+                <div class="flex-1 text-left flex flex-col justify-center h-full">
+                    <!-- LARGER LOGO -->
+                    <div class="mb-2">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-12 object-contain">
+                    </div>
+                    
+                    <div class="flex items-baseline gap-2 mb-1">
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Pay:</span>
+                        <span id="paynowTotalDisplay" class="text-xl font-bold text-purple-700 dark:text-purple-400">$0.00</span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">To: <span id="paynowNumberDisplay" class="font-mono font-bold text-gray-800 dark:text-gray-200">...</span></p>
+                    </div>
+
+                    <div class="inline-block">
+                        <span class="text-xs text-purple-700 dark:text-purple-300 font-bold bg-purple-100 dark:bg-purple-900/50 px-2 py-1 rounded border border-purple-200 dark:border-purple-800">Ref: <span id="paynowRefDisplay">---</span></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -201,12 +239,10 @@
         <div class="bg-green-100 dark:bg-green-900 p-4 rounded-full mb-4"><i class="fas fa-check text-4xl text-green-600 dark:text-green-400"></i></div>
         <h2 class="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Order Submitted!</h2>
         
-        <!-- FOCUSED EMAIL MESSAGE -->
         <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-3 mb-4 text-center">
             <p class="text-sm text-blue-800 dark:text-blue-200">A confirmation email has been sent to <br><span id="successEmailDisplay" class="font-bold">...</span></p>
         </div>
 
-        <!-- FOCUSED COLLECTION DETAILS -->
         <div id="successCollectionDetails" class="hidden w-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded p-4 mb-6 text-center">
             <p class="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase mb-1">Collection Details</p>
             <p id="successFooterText" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"></p>
@@ -281,29 +317,35 @@
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-2">⚙️ App Settings</h3>
                 <div class="space-y-3">
-                    <!-- APP TITLE -->
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">App Title</label>
                         <input type="text" id="editAppTitle" class="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     </div>
 
-                    <!-- BANNER IMAGE UPLOAD -->
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400">Banner Image (Optional)</label>
                         <input type="file" id="newBannerImg" accept="image/*" class="w-full text-sm text-gray-500 dark:text-gray-400 mb-1">
                         <button onclick="uploadBanner()" class="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">Upload Banner</button>
                     </div>
 
-                    <!-- RICH TEXT INTRO -->
                     <div>
                         <label class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 block">Introduction (Rich Text)</label>
                         <div class="border rounded dark:border-gray-600">
-                            <div class="bg-gray-100 dark:bg-gray-700 p-1 border-b dark:border-gray-600 editor-toolbar flex gap-1">
+                            <div class="bg-gray-100 dark:bg-gray-700 p-1 border-b dark:border-gray-600 editor-toolbar flex gap-1 flex-wrap">
                                 <button type="button" onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
                                 <button type="button" onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
                                 <button type="button" onclick="formatDoc('underline')" title="Underline"><u>U</u></button>
-                                <button type="button" onclick="formatDoc('foreColor', prompt('Enter Color (e.g. red, #ff0000)'))" title="Text Color"><i class="fas fa-palette"></i></button>
-                                <button type="button" onclick="formatDoc('hiliteColor', 'yellow')" title="Highlight"><i class="fas fa-highlighter"></i></button>
+                                
+                                <!-- GUI COLOR PICKER -->
+                                <label title="Text Color" class="relative">
+                                    <i class="fas fa-palette"></i>
+                                    <input type="color" onchange="formatDoc('foreColor', this.value)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
+                                </label>
+
+                                <!-- GUI HIGHLIGHT -->
+                                <button type="button" onclick="applyHighlight()" title="Highlight (Yellow)">
+                                    <i class="fas fa-highlighter text-yellow-600"></i>
+                                </button>
                             </div>
                             <div id="editIntroRich" contenteditable="true" class="p-2 min-h-[150px] text-sm dark:text-white bg-white dark:bg-gray-700"></div>
                         </div>
@@ -332,7 +374,6 @@
                 </div>
             </div>
             
-            <!-- Products Panel (unchanged except wrapper) -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-10">
                 <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 border-b dark:border-gray-700 pb-2">📦 Manage Products</h3>
                 <div class="flex gap-2 mb-4">
@@ -352,8 +393,8 @@
         </div>
 
         <div id="admin-panel-summary" class="hidden">
-            <!-- Summary Tab Content (Unchanged) -->
             <div id="summaryContent" class="space-y-6">
+                <!-- Summary content unchanged -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow border-l-4 border-blue-500">
                         <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Total Revenue</p>
@@ -394,7 +435,6 @@
         </div>
 
         <div id="admin-panel-fulfillment" class="hidden">
-            <!-- Fulfillment Content (Unchanged) -->
             <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
                  <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-2">Order Search</h3>
                  <div class="flex gap-2">
@@ -424,6 +464,23 @@
     function formatDoc(cmd, value=null) {
         document.execCommand(cmd, false, value);
     }
+    
+    // Custom Highlight Function for Visibility
+    function applyHighlight() {
+        const selection = window.getSelection();
+        if (selection.rangeCount) {
+            const range = selection.getRangeAt(0);
+            const span = document.createElement("span");
+            // Tailwind class ensuring text is black on yellow bg even in dark mode
+            span.className = "bg-yellow-200 text-gray-900 dark:bg-yellow-500 dark:text-black px-1 rounded";
+            span.textContent = selection.toString();
+            
+            // Basic handling: delete selection and insert span
+            // Note: This is a simple implementation. Complex selections might need better handling.
+            range.deleteContents();
+            range.insertNode(span);
+        }
+    }
 
     // Initialize App Data
     window.onload = loadAppData;
@@ -450,16 +507,13 @@
     }
 
     function updateUI() {
-        // App Title
         document.title = appData.config.appTitle || "Fundraising Shop";
         document.getElementById('appTitleDisplay').innerText = appData.config.appTitle || "Fundraising Drive";
         document.getElementById('editAppTitle').value = appData.config.appTitle || "";
 
-        // Intro (Rich Text)
         document.getElementById('displayIntro').innerHTML = appData.config.intro || '';
         document.getElementById('editIntroRich').innerHTML = appData.config.intro || '';
 
-        // Banner Image
         const bannerEl = document.getElementById('displayBanner');
         if (appData.config.bannerImageId) {
             bannerEl.src = "https://lh3.googleusercontent.com/d/" + appData.config.bannerImageId;
@@ -516,7 +570,6 @@
         return isClosed;
     }
 
-    // UPDATED: Added Trash Icon
     function renderProducts() {
         const isClosed = checkShopStatus();
         const list = document.getElementById('productList');
@@ -540,7 +593,6 @@
         }).join('');
     }
 
-    // UPDATED: Added Trash Icon
     function renderCart() {
         const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
         document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
@@ -577,7 +629,6 @@
         } 
     }
     
-    // NEW: Remove item entirely
     function deleteItem(id) {
         const index = cart.findIndex(item => item.id === id);
         if (index > -1) {
@@ -724,7 +775,6 @@
     function openAdminPanel() {
         router('admin');
         document.getElementById('adminEventName').innerText = appData.activeEventName;
-        // document.getElementById('editIntro').value = appData.config.intro || ''; // Removed, now using Rich Text
         document.getElementById('editIntroRich').innerHTML = appData.config.intro || '';
         
         document.getElementById('editPayment').value = appData.config.paymentInfo || '';
@@ -764,6 +814,7 @@
         });
     }
     
+    // ... switchAdminTab, loadAdminOrders, calculateSummaries, renderConfigurableSummary, filterOrders, updateStatus, renderAdminProducts, openEventSheet, saveListing, resetOrder, saveSettings, uploadBanner, addProduct, deleteProduct, createNewEvent, adminLogout, router, showLoading, compressImage, openEventFolder ...
     function switchAdminTab(tab) {
         ['dashboard', 'summary', 'fulfillment'].forEach(t => {
             const el = document.getElementById(`admin-panel-${t}`);
@@ -960,7 +1011,6 @@
         const paynowVal = document.getElementById('editPayment').value;
         if (!/^\d{8}$/.test(paynowVal)) { alert("PayNow Number must be exactly 8 digits."); return; }
         await apiCall('UPDATE_CONFIG', { 
-            // INTRO IS NOW RICH TEXT (innerHTML)
             intro: document.getElementById('editIntroRich').innerHTML, 
             appTitle: document.getElementById('editAppTitle').value,
             
@@ -969,13 +1019,11 @@
             adminPin: document.getElementById('editPin').value,
             emailIntro: document.getElementById('editEmailIntro').value,
             emailFooter: document.getElementById('editEmailFooter').value,
-            // Banner is saved via separate action, ID is already in appData if not changed
             bannerImageId: appData.config.bannerImageId 
         });
         alert("Saved!"); loadAppData();
     }
     
-    // NEW: Banner Upload Logic
     async function uploadBanner() {
         const file = document.getElementById('newBannerImg').files[0];
         if (!file) return alert("Select a file first");
