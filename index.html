@@ -696,7 +696,15 @@
         const file = document.getElementById('paymentProof').files[0];
         
         showLoading(true, "Compressing Payment Proof...");
-        let base64 = await compressImage(file, 0.5); 
+        // Added Timeout logic
+        let base64;
+        try {
+            base64 = await compressImage(file, 0.5);
+        } catch (e) {
+            showLoading(false);
+            alert("Error processing image: " + e.message + "\nPlease try a different file.");
+            return;
+        }
         
         showLoading(true, "Submitting Order...");
         const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
@@ -812,6 +820,7 @@
         });
     }
     
+    // ... (switchAdminTab, loadAdminOrders, calculateSummaries, renderConfigurableSummary, filterOrders, updateStatus, renderAdminProducts, openEventSheet, saveListing, resetOrder, saveSettings, uploadBanner, addProduct, deleteProduct, createNewEvent, adminLogout, router, showLoading, compressImage, openEventFolder unchanged) ...
     function switchAdminTab(tab) {
         ['dashboard', 'summary', 'fulfillment'].forEach(t => {
             const el = document.getElementById(`admin-panel-${t}`);
@@ -1020,6 +1029,20 @@
         });
         alert("Saved!"); loadAppData();
     }
+    
+    async function uploadBanner() {
+        const file = document.getElementById('newBannerImg').files[0];
+        if (!file) return alert("Select a file first");
+        showLoading(true, "Uploading Banner...");
+        try {
+            const base64 = await compressImage(file, 0.7);
+            const res = await apiCall('UPLOAD_BANNER', { imageBase64: base64, mimeType: 'image/jpeg' });
+            appData.config.bannerImageId = res.data.bannerId;
+            alert("Banner Uploaded! Don't forget to Save Settings.");
+        } catch(e) { alert("Upload failed"); } 
+        finally { showLoading(false); }
+    }
+
     async function addProduct() {
         const name = document.getElementById('newProdName').value;
         const price = document.getElementById('newProdPrice').value;
@@ -1052,6 +1075,7 @@
     }
     function compressImage(file, quality=0.5) {
         return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error("Compression timed out")), 10000);
             const MAX_WIDTH = 1000;
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -1059,6 +1083,7 @@
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = () => {
+                    clearTimeout(timer);
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
                     if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
@@ -1067,12 +1092,12 @@
                     ctx.drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', quality)); 
                 };
+                img.onerror = () => { clearTimeout(timer); reject(new Error("Invalid image format.")); };
             };
-            reader.onerror = reject;
+            reader.onerror = () => { clearTimeout(timer); reject(new Error("File read error.")); };
         });
     }
     
-    // NEW: Open Folder function that was missing in previous steps
     function openEventFolder() {
         if (appData.activeFolderId) window.open(`https://drive.google.com/drive/folders/${appData.activeFolderId}`, '_blank');
         else alert("No active folder available.");
