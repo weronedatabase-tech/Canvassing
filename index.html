@@ -48,7 +48,6 @@
         .editor-toolbar button:hover, .editor-toolbar label:hover { background: #eee; }
         .editor-content { min-height: 150px; overflow-y: auto; }
         
-        /* Color Picker Reset */
         input[type="color"] {
             -webkit-appearance: none;
             border: none;
@@ -172,22 +171,32 @@
         <!-- COMPACT QR SECTION -->
         <div class="bg-white dark:bg-gray-800 border-2 border-purple-800 dark:border-purple-600 p-3 rounded-lg mb-4 shadow-sm">
             <div class="flex flex-row items-center gap-4">
-                <!-- Left: QR and Download -->
+                <!-- Left: QR and Buttons -->
                 <div class="flex flex-col items-center gap-2 shrink-0">
                     <div class="bg-white p-1 rounded border dark:border-gray-600">
+                        <!-- HIDDEN CANVAS -->
                         <canvas id="qrCanvas" class="hidden"></canvas>
+                        <!-- VISIBLE IMAGE -->
                         <img id="qrImage" class="w-24 h-24 block" alt="QR Code" src="">
                     </div>
-                    <!-- CHANGED: BUTTON CALLS SHARE FUNCTION -->
-                    <button onclick="shareQrCode()" class="w-full text-center bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center justify-center gap-1">
-                        <i class="fas fa-share-alt"></i> Save/Share
-                    </button>
-                    <!-- UPDATED HINT -->
-                    <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center leading-tight w-24">If fails, please Screenshot</p>
+                    
+                    <!-- TWO BUTTONS ROW -->
+                    <div class="flex gap-1 w-full">
+                        <button onclick="downloadQrCode()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 text-[10px] py-1 rounded font-bold border border-gray-300" title="Download Image">
+                            <i class="fas fa-download"></i> Save
+                        </button>
+                        <button onclick="shareQrCode()" class="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-800 text-[10px] py-1 rounded font-bold border border-purple-200" title="Share via App">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                    </div>
+
+                    <!-- HINT TEXT -->
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center leading-tight w-24">Or long-press QR</p>
                 </div>
 
                 <!-- Right: Details -->
                 <div class="flex-1 text-left flex flex-col justify-center h-full">
+                    <!-- LARGER LOGO -->
                     <div class="mb-2">
                         <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-12 object-contain">
                     </div>
@@ -675,8 +684,20 @@
         
         // Convert to Image for Long-Press
         img.src = canvas.toDataURL("image/png");
-        document.getElementById('downloadQrBtn').href = canvas.toDataURL("image/png");
+        // Removed direct link logic from generatePayNowQR since buttons handle it
     }
+    
+    // NEW: Function to handle Direct Download
+    function downloadQrCode() {
+        const canvas = document.getElementById('qrCanvas');
+        const link = document.createElement('a');
+        link.download = 'paynow_qr.png';
+        link.href = canvas.toDataURL();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     function createPayNowPayload(number, amount, refId) {
         const amtStr = amount.toFixed(2);
         const proxy = `+65${number}`;
@@ -786,16 +807,10 @@
                     text: 'Please scan this QR to pay.'
                 });
             } else {
-                // Fallback to simple download link click
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = 'paynow_qr.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                alert("Sharing not supported on this browser. Use the Save button.");
             }
         } catch (error) {
-            alert("Could not share/download automatically. Please take a screenshot.");
+            alert("Share failed. Use the Save button.");
         }
     }
 
