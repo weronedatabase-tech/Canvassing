@@ -175,22 +175,19 @@
                 <!-- Left: QR and Download -->
                 <div class="flex flex-col items-center gap-2 shrink-0">
                     <div class="bg-white p-1 rounded border dark:border-gray-600">
-                        <!-- HIDDEN CANVAS -->
                         <canvas id="qrCanvas" class="hidden"></canvas>
-                        <!-- VISIBLE IMAGE FOR LONG PRESS -->
                         <img id="qrImage" class="w-24 h-24 block" alt="QR Code" src="">
                     </div>
-                    <!-- Download Button -->
-                    <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="w-full text-center bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800">
-                        <i class="fas fa-download"></i> Save QR
-                    </a>
-                    <!-- HINT TEXT -->
-                    <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center leading-tight w-24">If button fails, long-press QR to save</p>
+                    <!-- CHANGED: BUTTON CALLS SHARE FUNCTION -->
+                    <button onclick="shareQrCode()" class="w-full text-center bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center justify-center gap-1">
+                        <i class="fas fa-share-alt"></i> Save/Share
+                    </button>
+                    <!-- UPDATED HINT -->
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center leading-tight w-24">If fails, please Screenshot</p>
                 </div>
 
                 <!-- Right: Details -->
                 <div class="flex-1 text-left flex flex-col justify-center h-full">
-                    <!-- LARGER LOGO -->
                     <div class="mb-2">
                         <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrFTTv8ACzZZSrgYoLfi00cQmG-hPk0Pxdzg&s" alt="PayNow" class="h-12 object-contain">
                     </div>
@@ -771,6 +768,35 @@
             router('success');
 
         } catch(err) { console.error(err); }
+    }
+
+    // NEW: WEB SHARE API FOR QR
+    async function shareQrCode() {
+        const canvas = document.getElementById('qrCanvas');
+        try {
+            const dataUrl = canvas.toDataURL();
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], "paynow_qr.png", { type: "image/png" });
+            
+            // Try Native Share
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'PayNow QR',
+                    text: 'Please scan this QR to pay.'
+                });
+            } else {
+                // Fallback to simple download link click
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'paynow_qr.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } catch (error) {
+            alert("Could not share/download automatically. Please take a screenshot.");
+        }
     }
 
     function sendWhatsapp() {
