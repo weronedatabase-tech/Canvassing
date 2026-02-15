@@ -175,12 +175,17 @@
                 <!-- Left: QR and Download -->
                 <div class="flex flex-col items-center gap-2 shrink-0">
                     <div class="bg-white p-1 rounded border dark:border-gray-600">
-                        <canvas id="qrCanvas" class="w-24 h-24"></canvas>
+                        <!-- HIDDEN CANVAS -->
+                        <canvas id="qrCanvas" class="hidden"></canvas>
+                        <!-- VISIBLE IMAGE FOR LONG PRESS -->
+                        <img id="qrImage" class="w-24 h-24 block" alt="QR Code" src="">
                     </div>
-                    <!-- Download Button Below QR -->
+                    <!-- Download Button -->
                     <a id="downloadQrBtn" href="#" download="paynow_qr.png" class="w-full text-center bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded text-xs font-bold hover:bg-purple-200 dark:hover:bg-purple-800">
                         <i class="fas fa-download"></i> Save QR
                     </a>
+                    <!-- HINT TEXT -->
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center leading-tight w-24">If button fails, long-press QR to save</p>
                 </div>
 
                 <!-- Right: Details -->
@@ -662,10 +667,17 @@
         document.getElementById('paynowTotalDisplay').innerText = `$${totalAmount.toFixed(2)}`;
         document.getElementById('paynowNumberDisplay').innerText = uen ? "+65 " + uen : "Not Set";
         document.getElementById('paynowRefDisplay').innerText = currentOrderId;
-        if (!uen || totalAmount <= 0) return;
-        const payload = createPayNowPayload(uen, totalAmount, currentOrderId);
-        new QRious({ element: document.getElementById('qrCanvas'), value: payload, size: 200, level: 'H' });
+        
         const canvas = document.getElementById('qrCanvas');
+        const img = document.getElementById('qrImage');
+        
+        if (!uen || totalAmount <= 0) return;
+        
+        const payload = createPayNowPayload(uen, totalAmount, currentOrderId);
+        new QRious({ element: canvas, value: payload, size: 200, level: 'H' });
+        
+        // Convert to Image for Long-Press
+        img.src = canvas.toDataURL("image/png");
         document.getElementById('downloadQrBtn').href = canvas.toDataURL("image/png");
     }
     function createPayNowPayload(number, amount, refId) {
