@@ -1,6 +1,6 @@
 const TEMPLATE_ROOT_FOLDER_ID = "1A8jf8VQ7B5zAc7D4sEcW-Kr04V3XTKWT";
 const DEFAULT_ADMIN_PIN = "1234";
- 
+
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('Fundraising Shop')
